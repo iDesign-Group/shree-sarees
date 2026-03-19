@@ -52,6 +52,11 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('user');
     if (userStr == null) return null;
+
+    // Restore token into memory on app start
+    final token = prefs.getString('token');
+    if (token != null) _memoryToken = token;
+
     return AppUser.fromJson(jsonDecode(userStr));
   }
 
