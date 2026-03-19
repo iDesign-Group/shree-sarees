@@ -9,8 +9,9 @@ class ApiService {
   static final String baseUrl = kIsWeb
       ? 'http://localhost:3000'
       : 'http://192.168.1.11:3000';
-
+  static String? _memoryToken;
   static Future<String?> _getToken() async {
+    if (_memoryToken != null) return _memoryToken;
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
   }
@@ -36,6 +37,7 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', data['token']);
     await prefs.setString('user', jsonEncode(data['user']));
+    _memoryToken = data['token'];
     return data;
   }
 
@@ -43,6 +45,7 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     await prefs.remove('user');
+    _memoryToken = null;
   }
 
   static Future<AppUser?> getCurrentUser() async {
