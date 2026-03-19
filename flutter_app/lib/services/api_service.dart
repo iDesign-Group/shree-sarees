@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
 class ApiService {
-  // Change this to your server IP/URL
-  static const String baseUrl = 'http://192.168.1.11:3000';
+  // Auto-detect: localhost for web browser, LAN IP for real device
+  static final String baseUrl = kIsWeb
+      ? 'http://localhost:3000'
+      : 'http://192.168.1.11:3000';
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
