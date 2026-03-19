@@ -5,7 +5,7 @@ import '../models/models.dart';
 
 class ApiService {
   // Change this to your server IP/URL
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'http://192.168.1.11:3000';
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
