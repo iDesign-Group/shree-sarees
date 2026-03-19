@@ -1,0 +1,93 @@
+<% var pageTitle = 'Shipments'; %>
+<%- include('layout/header') %>
+
+<div class="two-col">
+  <!-- Left: Order Selection -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Select Order</h3>
+    </div>
+    <% if (orders.length > 0) { %>
+      <% orders.forEach(function(order) { %>
+        <div class="order-select-card" onclick="selectOrderForShipment(<%= order.id %>, '<%= order.user_name %>', '<%= order.total_sarees %>', '<%= order.total_amount %>', '<%= order.status %>')" style="padding:12px 16px;border:1px solid #E8E0D5;border-radius:8px;margin-bottom:8px;cursor:pointer;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <strong>#<%= order.id %></strong> — <%= order.user_name %>
+            </div>
+            <span class="badge badge-<%= order.status %>"><%= order.status %></span>
+          </div>
+          <div style="font-size:12px;color:#6B6B6B;margin-top:4px;">
+            <%= order.total_sarees %> sarees | ₹<%= Number(order.total_amount).toLocaleString('en-IN') %>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p style="color:#6B6B6B;text-align:center;padding:24px;">No confirmed/shipped orders available.</p>
+    <% } %>
+  </div>
+
+  <!-- Right: Shipment Form -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Shipment Details</h3>
+    </div>
+    <div id="shipmentOrderSummary" style="padding:12px 16px;background:#FAF7F2;border-left:4px solid #6D1C2E;border-radius:0 8px 8px 0;margin-bottom:16px;display:none;">
+    </div>
+    <form id="shipmentForm">
+      <input type="hidden" id="shipmentOrderId">
+      <div class="form-group">
+        <label>Courier Name</label>
+        <input type="text" id="courierName" class="form-control" placeholder="e.g. Blue Dart, DTDC" required>
+      </div>
+      <div class="form-group">
+        <label>Tracking Number</label>
+        <input type="text" id="trackingNumber" class="form-control" placeholder="Tracking number" required>
+      </div>
+      <div class="form-group">
+        <label>Shipment Date</label>
+        <input type="date" id="shipmentDate" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="shipmentNotes" class="form-control" rows="3" placeholder="Any additional notes..."></textarea>
+      </div>
+      <button type="button" class="btn btn-gold" onclick="saveShipment()">Save Shipment</button>
+    </form>
+  </div>
+</div>
+
+<!-- Existing Shipments -->
+<div class="card" style="margin-top:24px;">
+  <div class="card-header">
+    <h3>All Shipments</h3>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Order</th>
+        <th>Customer</th>
+        <th>Courier</th>
+        <th>Tracking</th>
+        <th>Date</th>
+        <th>Notified</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% shipments.forEach(function(s) { %>
+        <tr>
+          <td><strong>#<%= s.order_id %></strong></td>
+          <td><%= s.user_name %></td>
+          <td><%= s.courier_name %></td>
+          <td><%= s.tracking_number %></td>
+          <td><%= s.shipment_date ? new Date(s.shipment_date).toLocaleDateString('en-IN') : '-' %></td>
+          <td><%= s.notified_at ? '✅' : '❌' %></td>
+        </tr>
+      <% }) %>
+      <% if (shipments.length === 0) { %>
+        <tr><td colspan="6" style="text-align:center;color:#6B6B6B;padding:32px;">No shipments yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('layout/footer') %>

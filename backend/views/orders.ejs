@@ -1,0 +1,64 @@
+<% var pageTitle = 'Orders'; %>
+<%- include('layout/header') %>
+
+<div class="card">
+  <div class="card-header">
+    <h3>All Orders</h3>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="filter-tabs">
+    <button class="filter-tab active" onclick="filterOrders('all', this)">All</button>
+    <button class="filter-tab" onclick="filterOrders('pending', this)">Pending</button>
+    <button class="filter-tab" onclick="filterOrders('confirmed', this)">Confirmed</button>
+    <button class="filter-tab" onclick="filterOrders('shipped', this)">Shipped</button>
+    <button class="filter-tab" onclick="filterOrders('delivered', this)">Delivered</button>
+  </div>
+
+  <table class="data-table" id="ordersTable">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Sarees</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% orders.forEach(function(order) { %>
+        <tr class="order-row" data-status="<%= order.status %>" data-id="<%= order.id %>" onclick="toggleOrderDetail(<%= order.id %>)" style="cursor:pointer;">
+          <td><strong>#<%= order.id %></strong></td>
+          <td><%= order.user_name %></td>
+          <td><%= order.total_sarees %></td>
+          <td>₹<%= Number(order.total_amount).toLocaleString('en-IN') %></td>
+          <td><span class="badge badge-<%= order.status %>"><%= order.status %></span></td>
+          <td><%= new Date(order.order_date).toLocaleDateString('en-IN') %></td>
+          <td class="action-btns" onclick="event.stopPropagation()">
+            <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px;" onchange="updateOrderStatus(<%= order.id %>, this.value)">
+              <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+              <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+              <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+            </select>
+            <button class="btn btn-sm btn-outline-maroon" onclick="event.stopPropagation(); openShipmentForOrder(<%= order.id %>)">Shipment</button>
+          </td>
+        </tr>
+        <tr class="expandable-row" id="detail-<%= order.id %>">
+          <td colspan="7">
+            <div class="expandable-content" id="detail-content-<%= order.id %>">
+              <p style="color:#6B6B6B;">Loading order items...</p>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (orders.length === 0) { %>
+        <tr><td colspan="7" style="text-align:center;color:#6B6B6B;padding:32px;">No orders yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('layout/footer') %>

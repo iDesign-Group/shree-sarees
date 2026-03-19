@@ -1,0 +1,108 @@
+<% var pageTitle = 'Products'; %>
+<%- include('layout/header') %>
+
+<div class="card">
+  <div class="card-header">
+    <h3>All Products</h3>
+    <button class="btn btn-gold" onclick="openProductDrawer()"><i class="lucide-plus"></i> Add Product</button>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Image</th>
+        <th>Code</th>
+        <th>Name</th>
+        <th>Set Size</th>
+        <th>₹/Saree</th>
+        <th>₹/Bundle</th>
+        <th>Stock</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% products.forEach(function(p) { %>
+        <tr>
+          <td>
+            <% if (p.images && p.images.length > 0) { %>
+              <img src="/<%= p.images[0].image_path %>" class="thumb" alt="">
+            <% } else { %>
+              <div class="thumb" style="background:#FAF7F2;display:flex;align-items:center;justify-content:center;"><i class="lucide-image" style="color:#E8E0D5;"></i></div>
+            <% } %>
+          </td>
+          <td><span class="badge" style="background:#FDF6E3;color:#C9A84C;"><%= p.product_code %></span></td>
+          <td><strong><%= p.product_name %></strong></td>
+          <td><%= p.set_size %></td>
+          <td>₹<%= Number(p.price_per_saree).toLocaleString('en-IN') %></td>
+          <td><strong>₹<%= (p.set_size * p.price_per_saree).toLocaleString('en-IN') %></strong></td>
+          <td><%= p.total_bundles || 0 %> bundles</td>
+          <td class="action-btns">
+            <button class="btn btn-sm btn-outline-gold" onclick='editProduct(<%= JSON.stringify(p) %>)'>Edit</button>
+            <button class="btn btn-sm btn-outline-red" onclick="deleteProduct(<%= p.id %>)">Delete</button>
+            <button class="btn btn-sm btn-outline-maroon" onclick="openImageUpload(<%= p.id %>)">Images</button>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (products.length === 0) { %>
+        <tr><td colspan="8" style="text-align:center;color:#6B6B6B;padding:32px;">No products yet. Click "Add Product" to start.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Product Drawer -->
+<div class="drawer-overlay" id="productOverlay" onclick="closeProductDrawer()"></div>
+<div class="drawer" id="productDrawer">
+  <div class="drawer-header">
+    <h3 id="drawerTitle">Add Product</h3>
+    <button class="icon-btn" onclick="closeProductDrawer()"><i class="lucide-x"></i></button>
+  </div>
+  <div class="drawer-body">
+    <form id="productForm">
+      <input type="hidden" id="productId" name="id">
+      <div class="form-group">
+        <label>Product Code</label>
+        <input type="text" id="productCode" name="product_code" class="form-control" placeholder="SS-XXX-001" required>
+      </div>
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" id="productName" name="product_name" class="form-control" placeholder="Banarasi Silk Heritage" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Set Size (sarees per bundle)</label>
+          <input type="number" id="setSize" name="set_size" class="form-control" min="1" required oninput="calcBundlePrice()">
+        </div>
+        <div class="form-group">
+          <label>Price per Saree (₹)</label>
+          <input type="number" id="pricePerSaree" name="price_per_saree" class="form-control" min="0" step="0.01" required oninput="calcBundlePrice()">
+        </div>
+      </div>
+      <div class="auto-calc" id="bundlePriceCalc">Bundle Price: ₹0</div>
+    </form>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-outline-maroon" onclick="closeProductDrawer()">Cancel</button>
+    <button class="btn btn-gold" onclick="saveProduct()">Save Product</button>
+  </div>
+</div>
+
+<!-- Image Upload Drawer -->
+<div class="drawer-overlay" id="imageOverlay" onclick="closeImageDrawer()"></div>
+<div class="drawer" id="imageDrawer">
+  <div class="drawer-header">
+    <h3>Product Images</h3>
+    <button class="icon-btn" onclick="closeImageDrawer()"><i class="lucide-x"></i></button>
+  </div>
+  <div class="drawer-body">
+    <input type="hidden" id="imageProductId">
+    <div class="upload-zone" onclick="document.getElementById('imageInput').click()">
+      <i class="lucide-upload-cloud"></i>
+      <p>Click or drag images here to upload</p>
+      <input type="file" id="imageInput" multiple accept="image/*" style="display:none" onchange="uploadImages()">
+    </div>
+    <div class="image-grid" id="imagePreview"></div>
+  </div>
+</div>
+
+<%- include('layout/footer') %>

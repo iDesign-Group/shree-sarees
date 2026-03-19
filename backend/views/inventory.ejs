@@ -1,0 +1,131 @@
+<% var pageTitle = 'Inward Stock Entry'; %>
+<%- include('layout/header') %>
+
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3>Record Inward Stock</h3>
+  </div>
+
+  <!-- Wizard Steps -->
+  <div class="wizard-steps">
+    <div class="wizard-step active" id="ws1">
+      <div class="step-circle">1</div>
+      <span class="step-label">Select Product</span>
+    </div>
+    <div class="step-line" id="sl1"></div>
+    <div class="wizard-step" id="ws2">
+      <div class="step-circle">2</div>
+      <span class="step-label">Enter Bundles</span>
+    </div>
+    <div class="step-line" id="sl2"></div>
+    <div class="wizard-step" id="ws3">
+      <div class="step-circle">3</div>
+      <span class="step-label">Select Location</span>
+    </div>
+  </div>
+
+  <!-- Step 1: Select Product -->
+  <div class="wizard-panel active" id="panel1">
+    <div class="search-bar">
+      <i class="lucide-search"></i>
+      <input type="text" id="productSearch" placeholder="Search product by name or code..." oninput="filterProducts()">
+    </div>
+    <div id="productList">
+      <% products.forEach(function(p) { %>
+        <div class="product-select-card" data-id="<%= p.id %>" data-name="<%= p.product_name %>" data-code="<%= p.product_code %>" data-setsize="<%= p.set_size %>" data-stock="<%= p.total_bundles || 0 %>" onclick="selectProduct(this)" style="padding:12px 16px;border:1px solid #E8E0D5;border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong><%= p.product_name %></strong>
+            <span class="badge" style="background:#FDF6E3;color:#C9A84C;margin-left:8px;"><%= p.product_code %></span>
+          </div>
+          <div style="text-align:right;font-size:12px;color:#6B6B6B;">
+            Set: <%= p.set_size %> | Stock: <%= p.total_bundles || 0 %> bundles
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Step 2: Enter Bundles -->
+  <div class="wizard-panel" id="panel2">
+    <div class="summary-card" id="selectedProductCard" style="margin-bottom:16px;"></div>
+    <div class="form-group">
+      <label>Number of Bundles</label>
+      <input type="number" id="bundleCount" class="form-control" min="1" placeholder="Enter bundle count" oninput="calcTotalSarees()">
+    </div>
+    <div class="auto-calc" id="totalSareesCalc">Total Sarees: 0</div>
+    <div class="form-group" style="margin-top:16px;">
+      <label>Inward Date</label>
+      <input type="date" id="inwardDate" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+    </div>
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      <button class="btn btn-outline-maroon" onclick="wizardBack(1)">Back</button>
+      <button class="btn btn-gold" onclick="wizardNext(3)">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Select Location -->
+  <div class="wizard-panel" id="panel3">
+    <div class="form-group">
+      <label>Godown</label>
+      <select id="godownSelect" class="form-control" onchange="loadRacks()">
+        <option value="">Select Godown</option>
+        <% godowns.forEach(function(g) { %>
+          <option value="<%= g.id %>"><%= g.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Rack</label>
+      <select id="rackSelect" class="form-control" onchange="loadShelves()" disabled>
+        <option value="">Select Rack</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Shelf</label>
+      <select id="shelfSelect" class="form-control" disabled>
+        <option value="">Select Shelf</option>
+      </select>
+    </div>
+
+    <div class="summary-card" id="finalSummary" style="display:none;"></div>
+
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      <button class="btn btn-outline-maroon" onclick="wizardBack(2)">Back</button>
+      <button class="btn btn-gold" onclick="submitInward()">Submit Inward Stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Existing Inventory Table -->
+<div class="card">
+  <div class="card-header">
+    <h3>Current Inventory</h3>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Bundles</th>
+        <th>Sarees</th>
+        <th>Location</th>
+        <th>Inward Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% inventory.forEach(function(inv) { %>
+        <tr>
+          <td><strong><%= inv.product_name %></strong> <span style="color:#6B6B6B;">(<%= inv.product_code %>)</span></td>
+          <td><%= inv.bundle_count %></td>
+          <td><%= inv.total_sarees %></td>
+          <td><%= inv.godown_name %> → <%= inv.rack_number %> → <%= inv.shelf_number %></td>
+          <td><%= new Date(inv.inward_date).toLocaleDateString('en-IN') %></td>
+        </tr>
+      <% }) %>
+      <% if (inventory.length === 0) { %>
+        <tr><td colspan="5" style="text-align:center;color:#6B6B6B;padding:32px;">No inventory records yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('layout/footer') %>

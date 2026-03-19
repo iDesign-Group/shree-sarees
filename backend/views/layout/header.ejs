@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shree Sarees Admin - <%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/shree-sarees-theme.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-monogram">SS</div>
+      <h1 class="logo-text">Shree Sarees</h1>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="nav-item <%= page === 'dashboard' ? 'active' : '' %>">
+        <i class="lucide-layout-dashboard"></i><span>Dashboard</span>
+      </a>
+      <a href="/admin/products" class="nav-item <%= page === 'products' ? 'active' : '' %>">
+        <i class="lucide-package"></i><span>Products</span>
+      </a>
+      <a href="/admin/inventory" class="nav-item <%= page === 'inventory' ? 'active' : '' %>">
+        <i class="lucide-warehouse"></i><span>Inward Stock</span>
+      </a>
+      <a href="/admin/orders" class="nav-item <%= page === 'orders' ? 'active' : '' %>">
+        <i class="lucide-shopping-cart"></i><span>Orders</span>
+      </a>
+      <a href="/admin/shipments" class="nav-item <%= page === 'shipments' ? 'active' : '' %>">
+        <i class="lucide-truck"></i><span>Shipments</span>
+      </a>
+      <a href="/admin/users" class="nav-item <%= page === 'users' ? 'active' : '' %>">
+        <i class="lucide-users"></i><span>Users</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="avatar-circle"><%= admin.name.charAt(0).toUpperCase() %></div>
+        <div>
+          <div class="admin-name"><%= admin.name %></div>
+          <span class="role-badge role-admin">Admin</span>
+        </div>
+      </div>
+      <a href="/admin/logout" class="logout-btn"><i class="lucide-log-out"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="top-header">
+      <h2 class="page-title"><%= typeof pageTitle !== 'undefined' ? pageTitle : '' %></h2>
+      <div class="header-right">
+        <button class="icon-btn"><i class="lucide-bell"></i></button>
+        <div class="avatar-circle avatar-sm"><%= admin.name.charAt(0).toUpperCase() %></div>
+      </div>
+    </header>
+    <div class="content-area">

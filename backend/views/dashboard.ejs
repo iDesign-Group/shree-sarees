@@ -1,0 +1,71 @@
+<% var pageTitle = 'Dashboard'; %>
+<%- include('layout/header') %>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="lucide-package"></i></div>
+    <div class="kpi-info">
+      <h3><%= totalProducts %></h3>
+      <p>Total Products</p>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="lucide-layers"></i></div>
+    <div class="kpi-info">
+      <h3><%= totalBundles %></h3>
+      <p>Bundles in Stock</p>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="lucide-clock"></i></div>
+    <div class="kpi-info">
+      <h3><%= pendingOrders %></h3>
+      <p>Pending Orders</p>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="lucide-users"></i></div>
+    <div class="kpi-info">
+      <h3><%= totalUsers %></h3>
+      <p>Total Users</p>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="card">
+  <div class="card-header">
+    <h3>Recent Orders</h3>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Total Sarees</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+<% if (typeof recentOrders !== 'undefined' && recentOrders.length > 0) { %>
+  <% recentOrders.forEach(order => { %>
+    <tr>
+      <td><strong>#<%= order.id %></strong></td>
+      <td><%= order.user_name %></td>
+      <td><%= order.total_sarees %></td>
+      <td>₹<%= Number(order.total_amount).toLocaleString('en-IN') %></td>
+      <td><span class="badge badge-<%= order.status %>"><%= order.status %></span></td>
+      <td><%= new Date(order.order_date).toLocaleDateString('en-IN') %></td>
+    </tr>
+  <% }) %>
+<% } else { %>
+  <tr><td colspan="6" style="text-align:center;color:#6B6B6B;padding:32px;">No orders yet.</td></tr>
+<% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('layout/footer') %>
