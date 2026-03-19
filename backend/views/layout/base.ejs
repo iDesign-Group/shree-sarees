@@ -73,6 +73,13 @@
   <!-- Toast container -->
   <div id="toast-container"></div>
 
+  <!-- Save admin token for API calls -->
+  <script>
+    <% if (typeof adminToken !== 'undefined' && adminToken) { %>
+      localStorage.setItem('adminToken', '<%= adminToken %>');
+    <% } %>
+  </script>
+
   <script src="/js/admin.js"></script>
 </body>
 </html>

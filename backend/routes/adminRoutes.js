@@ -11,6 +11,7 @@ const Shipment = require('../models/shipmentModel');
 const adminSession = (req, res, next) => {
   if (req.session && req.session.admin) {
     res.locals.admin = req.session.admin;
+    res.locals.adminToken = req.session.adminToken;
     return next();
   }
   res.redirect('/admin/login');
@@ -20,6 +21,8 @@ const adminSession = (req, res, next) => {
 router.get('/login', (req, res) => {
   res.render('login', { error: null });
 });
+
+const jwt = require('jsonwebtoken');
 
 router.post('/login', async (req, res) => {
   try {
@@ -35,7 +38,17 @@ router.post('/login', async (req, res) => {
       return res.render('login', { error: 'Invalid admin credentials.' });
     }
 
+    // Set session
     req.session.admin = { id: user.id, name: user.name, email: user.email, role: user.role };
+
+    // Generate JWT token and store in session to pass to EJS
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+    req.session.adminToken = token; // ← store token in session
+
     res.redirect('/admin/dashboard');
   } catch (err) {
     console.error(err);
