@@ -1,19 +1,26 @@
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const User = require('../models/userModel');
+const Store = require('../models/storeModel');
 const { sendOrderConfirmation } = require('../utils/emailService');
 
 const orderController = {
   // POST /api/orders
   async create(req, res) {
     try {
-      const { items } = req.body;
+      const { items, store_name } = req.body;
       if (!items || items.length === 0) {
         return res.status(400).json({ error: 'Order must have at least one item.' });
       }
+      // Brokers must provide store_name
+      if (req.user.role === 'broker' && (!store_name || !store_name.trim())) {
+        return res.status(400).json({ error: 'Store name is required for brokers.' });
+      }
+
       let total_sarees = 0;
       let total_amount = 0;
       const processedItems = [];
+
       for (const item of items) {
         const product = await Product.findById(item.product_id);
         if (!product) return res.status(404).json({ error: `Product ${item.product_id} not found.` });
@@ -31,7 +38,20 @@ const orderController = {
         total_sarees += sarees_count;
         total_amount += bundle_cost;
       }
-      const orderId = await Order.create({ user_id: req.user.id, total_sarees, total_amount, items: processedItems });
+
+      const orderId = await Order.create({
+        user_id: req.user.id,
+        store_name: store_name ? store_name.trim() : null,
+        total_sarees,
+        total_amount,
+        items: processedItems,
+      });
+
+      // Auto-save store name for future autocomplete
+      if (req.user.role === 'broker' && store_name && store_name.trim()) {
+        await Store.save(req.user.id, store_name.trim());
+      }
+
       const order = await Order.findById(orderId);
       const user = await User.findById(req.user.id);
       if (user && user.email) sendOrderConfirmation(user.email, order, processedItems);
@@ -86,12 +106,11 @@ const orderController = {
     }
   },
 
-  // POST /api/orders/:id/cancel (admin + owner)
+  // POST /api/orders/:id/cancel
   async cancel(req, res) {
     try {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ error: 'Order not found.' });
-      // Only admin or the order owner can cancel
       if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
         return res.status(403).json({ error: 'Forbidden.' });
       }

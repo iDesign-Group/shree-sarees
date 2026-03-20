@@ -82,11 +82,14 @@ class ApiService {
   }
 
   // ── Orders ──────────────────────────────────────────
-  static Future<Order> placeOrder(List<Map<String, dynamic>> items) async {
+  static Future<Order> placeOrder(List<Map<String, dynamic>> items, {String? storeName}) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/orders'),
       headers: await _headers(),
-      body: jsonEncode({'items': items}),
+      body: jsonEncode({
+        'items': items,
+        if (storeName != null && storeName.isNotEmpty) 'store_name': storeName,
+      }),
     );
     final data = jsonDecode(res.body);
     if (res.statusCode != 201) throw Exception(data['error']);
@@ -132,6 +135,17 @@ class ApiService {
       final data = jsonDecode(res.body);
       throw Exception(data['error'] ?? 'Failed to delete order');
     }
+  }
+
+  // ── Store Names (broker autocomplete) ───────────────
+  static Future<List<StoreName>> getStoreNames() async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/api/stores'),
+      headers: await _headers(),
+    );
+    if (res.statusCode != 200) return [];
+    final List data = jsonDecode(res.body);
+    return data.map((e) => StoreName.fromJson(e)).toList();
   }
 
   // ── Shipments ───────────────────────────────────────

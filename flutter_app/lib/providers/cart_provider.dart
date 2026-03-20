@@ -11,11 +11,8 @@ class CartProvider extends ChangeNotifier {
   int get itemCount => _items.length;
   bool get isEmpty => _items.isEmpty;
 
-  int get totalSarees =>
-      _items.fold(0, (sum, item) => sum + item.sareesCount);
-
-  double get totalAmount =>
-      _items.fold(0, (sum, item) => sum + item.totalCost);
+  int get totalSarees => _items.fold(0, (sum, item) => sum + item.sareesCount);
+  double get totalAmount => _items.fold(0, (sum, item) => sum + item.totalCost);
 
   void addToCart(Product product, int bundles) {
     final existing = _items.indexWhere((i) => i.product.id == product.id);
@@ -49,12 +46,10 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Order?> placeOrder() async {
+  Future<Order?> placeOrder({String? storeName}) async {
     if (_items.isEmpty) return null;
-
     _isPlacingOrder = true;
     notifyListeners();
-
     try {
       final orderItems = _items
           .map((item) => {
@@ -62,8 +57,7 @@ class CartProvider extends ChangeNotifier {
                 'bundles_ordered': item.bundles,
               })
           .toList();
-
-      final order = await ApiService.placeOrder(orderItems);
+      final order = await ApiService.placeOrder(orderItems, storeName: storeName);
       _items.clear();
       _isPlacingOrder = false;
       notifyListeners();

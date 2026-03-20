@@ -99,6 +99,7 @@ class Order {
   final int totalSarees;
   final double totalAmount;
   final String? userName;
+  final String? storeName;
   final List<OrderItem> items;
 
   Order({
@@ -109,6 +110,7 @@ class Order {
     required this.totalSarees,
     required this.totalAmount,
     this.userName,
+    this.storeName,
     this.items = const [],
   });
 
@@ -120,9 +122,23 @@ class Order {
         totalSarees: json['total_sarees'] ?? 0,
         totalAmount: double.tryParse(json['total_amount'].toString()) ?? 0,
         userName: json['user_name'],
+        storeName: json['store_name'],
         items: json['items'] != null
             ? (json['items'] as List).map((e) => OrderItem.fromJson(e)).toList()
             : [],
+      );
+}
+
+// ── Store Name (autocomplete) ───────────────────────────
+class StoreName {
+  final int id;
+  final String name;
+
+  StoreName({required this.id, required this.name});
+
+  factory StoreName.fromJson(Map<String, dynamic> json) => StoreName(
+        id: json['id'],
+        name: json['name'] ?? '',
       );
 }
 
@@ -179,4 +195,5 @@ class AppUser {
       );
 
   bool get isAdmin => role == 'admin';
+  bool get isBroker => role == 'broker';
 }

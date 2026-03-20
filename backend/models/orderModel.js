@@ -1,14 +1,14 @@
 const pool = require('./db');
 
 const Order = {
-  async create({ user_id, total_sarees, total_amount, items }) {
+  async create({ user_id, store_name, total_sarees, total_amount, items }) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
 
       const [orderResult] = await conn.query(
-        'INSERT INTO orders (user_id, total_sarees, total_amount) VALUES (?, ?, ?)',
-        [user_id, total_sarees, total_amount]
+        'INSERT INTO orders (user_id, store_name, total_sarees, total_amount) VALUES (?, ?, ?, ?)',
+        [user_id, store_name || null, total_sarees, total_amount]
       );
       const orderId = orderResult.insertId;
 
@@ -19,7 +19,6 @@ const Order = {
           [orderId, item.product_id, item.bundles_ordered, item.sarees_count, item.price_per_saree, item.bundle_cost]
         );
 
-        // Deduct inventory FIFO
         let bundlesToDeduct = item.bundles_ordered;
         const [invRows] = await conn.query(
           `SELECT id, bundle_count FROM inventory
@@ -52,37 +51,26 @@ const Order = {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
-
-      // Ensure order exists and is not already cancelled/delivered
       const [rows] = await conn.query('SELECT status FROM orders WHERE id = ?', [id]);
       if (rows.length === 0) throw new Error('Order not found');
       if (rows[0].status === 'cancelled') throw new Error('Order is already cancelled');
       if (rows[0].status === 'delivered') throw new Error('Delivered orders cannot be cancelled');
 
-      // Restore inventory FIFO
       const [items] = await conn.query(
-        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?',
-        [id]
+        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?', [id]
       );
       for (const item of items) {
         let bundlesToRestore = item.bundles_ordered;
         const [invRows] = await conn.query(
-          `SELECT id FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`,
-          [item.product_id]
+          `SELECT id FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`, [item.product_id]
         );
         for (const inv of invRows) {
           if (bundlesToRestore <= 0) break;
-          await conn.query(
-            `UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`,
-            [bundlesToRestore, inv.id]
-          );
+          await conn.query(`UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`, [bundlesToRestore, inv.id]);
           bundlesToRestore = 0;
         }
       }
-
-      // Update status to cancelled
       await conn.query(`UPDATE orders SET status = 'cancelled' WHERE id = ?`, [id]);
-
       await conn.commit();
     } catch (err) {
       await conn.rollback();
@@ -97,21 +85,16 @@ const Order = {
     try {
       await conn.beginTransaction();
       const [items] = await conn.query(
-        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?',
-        [id]
+        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?', [id]
       );
       for (const item of items) {
         let bundlesToRestore = item.bundles_ordered;
         const [invRows] = await conn.query(
-          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`,
-          [item.product_id]
+          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`, [item.product_id]
         );
         for (const inv of invRows) {
           if (bundlesToRestore <= 0) break;
-          await conn.query(
-            `UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`,
-            [bundlesToRestore, inv.id]
-          );
+          await conn.query(`UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`, [bundlesToRestore, inv.id]);
           bundlesToRestore = 0;
         }
       }
@@ -128,7 +111,7 @@ const Order = {
 
   async findAll() {
     const [rows] = await pool.query(`
-      SELECT o.*, u.name AS user_name, u.email AS user_email
+      SELECT o.*, u.name AS user_name, u.email AS user_email, u.role AS user_role
       FROM orders o
       JOIN users u ON o.user_id = u.id
       ORDER BY o.order_date DESC
@@ -137,15 +120,15 @@ const Order = {
   },
 
   async findByUser(userId) {
-    const [rows] = await pool.query(`
-      SELECT o.* FROM orders o WHERE o.user_id = ? ORDER BY o.order_date DESC
-    `, [userId]);
+    const [rows] = await pool.query(
+      `SELECT o.* FROM orders o WHERE o.user_id = ? ORDER BY o.order_date DESC`, [userId]
+    );
     return rows;
   },
 
   async findById(id) {
     const [rows] = await pool.query(`
-      SELECT o.*, u.name AS user_name, u.email AS user_email
+      SELECT o.*, u.name AS user_name, u.email AS user_email, u.role AS user_role
       FROM orders o
       JOIN users u ON o.user_id = u.id
       WHERE o.id = ?

@@ -80,7 +80,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 }
 
-// ── Admin Dashboard ────────────────────────────────
+// ── Admin Dashboard ──────────────────────────────────────────
 class _AdminDashboard extends StatefulWidget {
   const _AdminDashboard();
   @override
@@ -132,10 +132,12 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                       const SizedBox(height: 8),
                       ...(_stats!['recentOrders'] as List<Order>).map((o) => Card(
                         child: ListTile(
-                          leading: CircleAvatar(backgroundColor: AppTheme.accent.withValues(alpha: 0.2), child: Text('#${o.id}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.accent))),
+                          leading: CircleAvatar(backgroundColor: AppTheme.accent.withValues(alpha: 0.2),
+                              child: Text('#${o.id}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.accent))),
                           title: Text(o.userName ?? 'Customer'),
-                          subtitle: Text('${o.totalSarees} sarees • ${o.status}'),
-                          trailing: Text('₹${o.totalAmount.toStringAsFixed(0)}', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                          subtitle: Text('${o.totalSarees} sarees \u2022 ${o.status}${o.storeName != null ? " \u2022 ${o.storeName}" : ""}'),
+                          trailing: Text('\u20b9${o.totalAmount.toStringAsFixed(0)}',
+                              style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
                         ),
                       )),
                     ],
@@ -172,7 +174,7 @@ class _KpiCard extends StatelessWidget {
   }
 }
 
-// ── Admin Orders Page ──────────────────────────────
+// ── Admin Orders Page ────────────────────────────────────────
 class _AdminOrdersPage extends StatefulWidget {
   const _AdminOrdersPage();
   @override
@@ -192,7 +194,8 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
     setState(() => _loading = false);
   }
 
-  List<Order> get _filtered => _filter == 'all' ? _orders : _orders.where((o) => o.status == _filter).toList();
+  List<Order> get _filtered =>
+      _filter == 'all' ? _orders : _orders.where((o) => o.status == _filter).toList();
 
   Color _statusColor(String status) {
     switch (status) {
@@ -235,6 +238,7 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
             totalSarees: _orders[idx].totalSarees,
             totalAmount: _orders[idx].totalAmount,
             userName: _orders[idx].userName,
+            storeName: _orders[idx].storeName,
             items: _orders[idx].items,
           );
         }
@@ -284,27 +288,45 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                       final canCancel = o.status != 'cancelled' && o.status != 'delivered';
                       return Card(
                         child: ListTile(
-                          title: Text('#${o.id} — ${o.userName ?? "Customer"}'),
-                          subtitle: Row(
+                          title: Text('#${o.id} \u2014 ${o.userName ?? "Customer"}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: _statusColor(o.status).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(o.status,
-                                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor(o.status))),
+                              Row(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(o.status).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(o.status,
+                                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor(o.status))),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text('${o.totalSarees} sarees',
+                                      style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
+                                ],
                               ),
-                              const SizedBox(width: 6),
-                              Text('${o.totalSarees} sarees', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
+                              if (o.storeName != null && o.storeName!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 3),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.store_outlined, size: 13, color: AppTheme.accent),
+                                      const SizedBox(width: 4),
+                                      Text(o.storeName!,
+                                          style: GoogleFonts.inter(fontSize: 12, color: AppTheme.accent, fontWeight: FontWeight.w600)),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('₹${o.totalAmount.toStringAsFixed(0)}',
+                              Text('\u20b9${o.totalAmount.toStringAsFixed(0)}',
                                   style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
                               const SizedBox(width: 8),
                               if (canCancel)
@@ -315,6 +337,7 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                                 ),
                             ],
                           ),
+                          isThreeLine: o.storeName != null,
                         ),
                       );
                     },
