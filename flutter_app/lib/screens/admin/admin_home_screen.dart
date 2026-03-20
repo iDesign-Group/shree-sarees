@@ -30,7 +30,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 600;
-
     if (isWide) {
       return Scaffold(
         body: Row(
@@ -65,7 +64,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         ),
       );
     }
-
     return Scaffold(
       body: _pages[_index],
       bottomNavigationBar: BottomNavigationBar(
@@ -82,10 +80,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 }
 
-// ── Admin Dashboard ─────────────────────────────────
+// ── Admin Dashboard ────────────────────────────────
 class _AdminDashboard extends StatefulWidget {
   const _AdminDashboard();
-
   @override
   State<_AdminDashboard> createState() => _AdminDashboardState();
 }
@@ -95,10 +92,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   bool _loading = true;
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-  }
+  void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
     try {
@@ -123,17 +117,14 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
+                        crossAxisCount: 2, shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.5,
+                        crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5,
                         children: [
-                          _KpiCard(icon: LucideIcons.package2, value: '${_stats!['totalProducts']}', label: 'Products'),
-                          _KpiCard(icon: LucideIcons.layers, value: '${_stats!['totalBundles']}', label: 'Bundles'),
-                          _KpiCard(icon: LucideIcons.clock, value: '${_stats!['pendingOrders']}', label: 'Pending'),
-                          _KpiCard(icon: LucideIcons.users, value: '${_stats!['totalUsers']}', label: 'Users'),
+                          _KpiCard(icon: LucideIcons.package2, value: '${_stats!["totalProducts"]}', label: 'Products'),
+                          _KpiCard(icon: LucideIcons.layers, value: '${_stats!["totalBundles"]}', label: 'Bundles'),
+                          _KpiCard(icon: LucideIcons.clock, value: '${_stats!["pendingOrders"]}', label: 'Pending'),
+                          _KpiCard(icon: LucideIcons.users, value: '${_stats!["totalUsers"]}', label: 'Users'),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -164,9 +155,7 @@ class _KpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppTheme.accent, width: 4)),
-        ),
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppTheme.accent, width: 4))),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,10 +172,9 @@ class _KpiCard extends StatelessWidget {
   }
 }
 
-// ── Admin Orders Page ────────────────────────────────
+// ── Admin Orders Page ──────────────────────────────
 class _AdminOrdersPage extends StatefulWidget {
   const _AdminOrdersPage();
-
   @override
   State<_AdminOrdersPage> createState() => _AdminOrdersPageState();
 }
@@ -197,58 +185,69 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
   String _filter = 'all';
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-  }
+  void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
-    try {
-      _orders = await ApiService.getOrders();
-    } catch (_) {}
+    try { _orders = await ApiService.getOrders(); } catch (_) {}
     setState(() => _loading = false);
   }
 
   List<Order> get _filtered => _filter == 'all' ? _orders : _orders.where((o) => o.status == _filter).toList();
 
-  Future<void> _deleteOrder(Order order) async {
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'pending': return AppTheme.warning;
+      case 'confirmed': return const Color(0xFF2471A3);
+      case 'shipped': return AppTheme.primary;
+      case 'delivered': return AppTheme.success;
+      case 'cancelled': return Colors.red;
+      default: return AppTheme.textSecondary;
+    }
+  }
+
+  Future<void> _cancelOrder(Order order) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete Order'),
-        content: Text('Delete Order #${order.id} for ${order.userName ?? "Customer"}?\nInventory will be restored automatically.'),
+        title: const Text('Cancel Order'),
+        content: Text('Cancel Order #${order.id} for ${order.userName ?? "Customer"}?\nInventory will be restored automatically.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
-
     if (confirmed != true) return;
-
     try {
-      await ApiService.deleteOrder(order.id);
-      setState(() => _orders.removeWhere((o) => o.id == order.id));
+      await ApiService.cancelOrder(order.id);
+      setState(() {
+        final idx = _orders.indexWhere((o) => o.id == order.id);
+        if (idx != -1) {
+          _orders[idx] = Order(
+            id: _orders[idx].id,
+            userId: _orders[idx].userId,
+            status: 'cancelled',
+            orderDate: _orders[idx].orderDate,
+            totalSarees: _orders[idx].totalSarees,
+            totalAmount: _orders[idx].totalAmount,
+            userName: _orders[idx].userName,
+            items: _orders[idx].items,
+          );
+        }
+      });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order #${order.id} deleted & inventory restored'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Order #${order.id} cancelled & inventory restored'),
+          backgroundColor: Colors.green,
+        ));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -265,12 +264,12 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.all(12),
                   child: Row(
-                    children: ['all', 'pending', 'confirmed', 'shipped', 'delivered'].map((s) => Padding(
+                    children: ['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map((s) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
                         label: Text(s == 'all' ? 'All' : s[0].toUpperCase() + s.substring(1)),
                         selected: _filter == s,
-                        selectedColor: AppTheme.accent,
+                        selectedColor: s == 'cancelled' ? Colors.red.shade100 : AppTheme.accent,
                         onSelected: (_) => setState(() => _filter = s),
                       ),
                     )).toList(),
@@ -282,21 +281,38 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                     itemCount: _filtered.length,
                     itemBuilder: (_, i) {
                       final o = _filtered[i];
+                      final canCancel = o.status != 'cancelled' && o.status != 'delivered';
                       return Card(
                         child: ListTile(
                           title: Text('#${o.id} — ${o.userName ?? "Customer"}'),
-                          subtitle: Text('${o.totalSarees} sarees • ${o.status}'),
+                          subtitle: Row(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(top: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: _statusColor(o.status).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(o.status,
+                                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor(o.status))),
+                              ),
+                              const SizedBox(width: 6),
+                              Text('${o.totalSarees} sarees', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
+                            ],
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text('₹${o.totalAmount.toStringAsFixed(0)}',
                                   style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
                               const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(LucideIcons.trash2, color: Colors.red, size: 20),
-                                tooltip: 'Delete Order',
-                                onPressed: () => _deleteOrder(o),
-                              ),
+                              if (canCancel)
+                                IconButton(
+                                  icon: const Icon(LucideIcons.xCircle, color: Colors.red, size: 20),
+                                  tooltip: 'Cancel Order',
+                                  onPressed: () => _cancelOrder(o),
+                                ),
                             ],
                           ),
                         ),

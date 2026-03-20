@@ -12,18 +12,34 @@ class OrderProvider extends ChangeNotifier {
   Future<void> loadOrders() async {
     _isLoading = true;
     notifyListeners();
-
     try {
       _orders = await ApiService.getOrders();
     } catch (e) {
       // silently fail
     }
-
     _isLoading = false;
     notifyListeners();
   }
 
   Future<Order> getOrderDetail(int id) async {
     return await ApiService.getOrder(id);
+  }
+
+  Future<void> cancelOrder(int id) async {
+    await ApiService.cancelOrder(id);
+    final idx = _orders.indexWhere((o) => o.id == id);
+    if (idx != -1) {
+      _orders[idx] = Order(
+        id: _orders[idx].id,
+        userId: _orders[idx].userId,
+        status: 'cancelled',
+        orderDate: _orders[idx].orderDate,
+        totalSarees: _orders[idx].totalSarees,
+        totalAmount: _orders[idx].totalAmount,
+        userName: _orders[idx].userName,
+        items: _orders[idx].items,
+      );
+      notifyListeners();
+    }
   }
 }

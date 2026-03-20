@@ -19,7 +19,7 @@ const Order = {
           [orderId, item.product_id, item.bundles_ordered, item.sarees_count, item.price_per_saree, item.bundle_cost]
         );
 
-        // Deduct inventory FIFO (oldest inward entries first)
+        // Deduct inventory FIFO
         let bundlesToDeduct = item.bundles_ordered;
         const [invRows] = await conn.query(
           `SELECT id, bundle_count FROM inventory
@@ -27,7 +27,6 @@ const Order = {
            ORDER BY inward_date ASC`,
           [item.product_id]
         );
-
         for (const inv of invRows) {
           if (bundlesToDeduct <= 0) break;
           const deduct = Math.min(inv.bundle_count, bundlesToDeduct);
@@ -49,27 +48,28 @@ const Order = {
     }
   },
 
-  async delete(id) {
+  async cancel(id) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
 
-      // Get all order items to restore inventory
+      // Ensure order exists and is not already cancelled/delivered
+      const [rows] = await conn.query('SELECT status FROM orders WHERE id = ?', [id]);
+      if (rows.length === 0) throw new Error('Order not found');
+      if (rows[0].status === 'cancelled') throw new Error('Order is already cancelled');
+      if (rows[0].status === 'delivered') throw new Error('Delivered orders cannot be cancelled');
+
+      // Restore inventory FIFO
       const [items] = await conn.query(
         'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?',
         [id]
       );
-
-      // Restore inventory FIFO (add back to oldest entries first)
       for (const item of items) {
         let bundlesToRestore = item.bundles_ordered;
         const [invRows] = await conn.query(
-          `SELECT id, bundle_count FROM inventory
-           WHERE product_id = ?
-           ORDER BY inward_date ASC`,
+          `SELECT id FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`,
           [item.product_id]
         );
-
         for (const inv of invRows) {
           if (bundlesToRestore <= 0) break;
           await conn.query(
@@ -80,10 +80,43 @@ const Order = {
         }
       }
 
-      // Delete order items and order
+      // Update status to cancelled
+      await conn.query(`UPDATE orders SET status = 'cancelled' WHERE id = ?`, [id]);
+
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  },
+
+  async delete(id) {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const [items] = await conn.query(
+        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?',
+        [id]
+      );
+      for (const item of items) {
+        let bundlesToRestore = item.bundles_ordered;
+        const [invRows] = await conn.query(
+          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`,
+          [item.product_id]
+        );
+        for (const inv of invRows) {
+          if (bundlesToRestore <= 0) break;
+          await conn.query(
+            `UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`,
+            [bundlesToRestore, inv.id]
+          );
+          bundlesToRestore = 0;
+        }
+      }
       await conn.query('DELETE FROM order_items WHERE order_id = ?', [id]);
       await conn.query('DELETE FROM orders WHERE id = ?', [id]);
-
       await conn.commit();
     } catch (err) {
       await conn.rollback();
@@ -118,7 +151,6 @@ const Order = {
       WHERE o.id = ?
     `, [id]);
     if (rows.length === 0) return null;
-
     const order = rows[0];
     const [items] = await pool.query(`
       SELECT oi.*, p.product_code, p.product_name, p.set_size
