@@ -13,6 +13,7 @@
     <button class="filter-tab" onclick="filterOrders('confirmed', this)">Confirmed</button>
     <button class="filter-tab" onclick="filterOrders('shipped', this)">Shipped</button>
     <button class="filter-tab" onclick="filterOrders('delivered', this)">Delivered</button>
+    <button class="filter-tab" onclick="filterOrders('cancelled', this)">Cancelled</button>
   </div>
 
   <table class="data-table" id="ordersTable">
@@ -20,6 +21,7 @@
       <tr>
         <th>Order ID</th>
         <th>Customer</th>
+        <th>Store</th>
         <th>Sarees</th>
         <th>Amount</th>
         <th>Status</th>
@@ -32,22 +34,27 @@
         <tr class="order-row" data-status="<%= order.status %>" data-id="<%= order.id %>" onclick="toggleOrderDetail(<%= order.id %>)" style="cursor:pointer;">
           <td><strong>#<%= order.id %></strong></td>
           <td><%= order.user_name %></td>
+          <td><%= order.store_name || '-' %></td>
           <td><%= order.total_sarees %></td>
           <td>₹<%= Number(order.total_amount).toLocaleString('en-IN') %></td>
           <td><span class="badge badge-<%= order.status %>"><%= order.status %></span></td>
           <td><%= new Date(order.order_date).toLocaleDateString('en-IN') %></td>
           <td class="action-btns" onclick="event.stopPropagation()">
-            <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px;" onchange="updateOrderStatus(<%= order.id %>, this.value)">
-              <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
-              <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
-              <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-              <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-            </select>
-            <button class="btn btn-sm btn-outline-maroon" onclick="event.stopPropagation(); openShipmentForOrder(<%= order.id %>)">Shipment</button>
+            <% if (order.status !== 'cancelled') { %>
+              <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px;" onchange="updateOrderStatus(<%= order.id %>, this.value)">
+                <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+                <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+              </select>
+              <button class="btn btn-sm btn-outline-maroon" onclick="event.stopPropagation(); openShipmentForOrder(<%= order.id %>)">Shipment</button>
+            <% } else { %>
+              <span style="color:#c0392b;font-size:12px;font-weight:600;">Cancelled</span>
+            <% } %>
           </td>
         </tr>
         <tr class="expandable-row" id="detail-<%= order.id %>">
-          <td colspan="7">
+          <td colspan="8">
             <div class="expandable-content" id="detail-content-<%= order.id %>">
               <p style="color:#6B6B6B;">Loading order items...</p>
             </div>
@@ -55,7 +62,7 @@
         </tr>
       <% }) %>
       <% if (orders.length === 0) { %>
-        <tr><td colspan="7" style="text-align:center;color:#6B6B6B;padding:32px;">No orders yet.</td></tr>
+        <tr><td colspan="8" style="text-align:center;color:#6B6B6B;padding:32px;">No orders yet.</td></tr>
       <% } %>
     </tbody>
   </table>
