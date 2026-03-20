@@ -27,7 +27,7 @@ class ApiService {
   // ── Auth ────────────────────────────────────────────
   static Future<Map<String, dynamic>> login(String email, String password) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/api/auth/login'),
+      Uri.parse('$baseUrl/api/users/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
