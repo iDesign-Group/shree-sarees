@@ -18,6 +18,25 @@ const Order = {
            VALUES (?, ?, ?, ?, ?, ?)`,
           [orderId, item.product_id, item.bundles_ordered, item.sarees_count, item.price_per_saree, item.bundle_cost]
         );
+
+        // Deduct inventory FIFO (oldest inward entries first)
+        let bundlesToDeduct = item.bundles_ordered;
+        const [invRows] = await conn.query(
+          `SELECT id, bundle_count FROM inventory
+           WHERE product_id = ? AND bundle_count > 0
+           ORDER BY inward_date ASC`,
+          [item.product_id]
+        );
+
+        for (const inv of invRows) {
+          if (bundlesToDeduct <= 0) break;
+          const deduct = Math.min(inv.bundle_count, bundlesToDeduct);
+          await conn.query(
+            `UPDATE inventory SET bundle_count = bundle_count - ? WHERE id = ?`,
+            [deduct, inv.id]
+          );
+          bundlesToDeduct -= deduct;
+        }
       }
 
       await conn.commit();
