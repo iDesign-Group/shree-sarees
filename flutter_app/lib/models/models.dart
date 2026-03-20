@@ -1,4 +1,4 @@
-// ── Product ─────────────────────────────────────────
+// ── Product ──────────────────────────────────────────────────
 class ProductImage {
   final int id;
   final String imagePath;
@@ -40,15 +40,15 @@ class Product {
         productName: json['product_name'] ?? '',
         setSize: json['set_size'] ?? 0,
         pricePerSaree: double.tryParse(json['price_per_saree'].toString()) ?? 0,
-        totalBundles: json['total_bundles'],
-        totalSareesInStock: json['total_sarees_in_stock'],
+        totalBundles: json['total_bundles'] != null ? int.tryParse(json['total_bundles'].toString()) : null,
+        totalSareesInStock: json['total_sarees_in_stock'] != null ? int.tryParse(json['total_sarees_in_stock'].toString()) : null,
         images: json['images'] != null
             ? (json['images'] as List).map((e) => ProductImage.fromJson(e)).toList()
             : [],
       );
 }
 
-// ── Cart Item ───────────────────────────────────────
+// ── Cart Item ───────────────────────────────────────────
 class CartItem {
   final Product product;
   int bundles;
@@ -59,7 +59,7 @@ class CartItem {
   double get totalCost => sareesCount * product.pricePerSaree;
 }
 
-// ── Order ───────────────────────────────────────────
+// ── Order ───────────────────────────────────────────────
 class OrderItem {
   final int productId;
   final String productCode;
@@ -126,7 +126,7 @@ class Order {
       );
 }
 
-// ── Shipment ────────────────────────────────────────
+// ── Shipment ──────────────────────────────────────────
 class Shipment {
   final int id;
   final int orderId;
@@ -154,7 +154,7 @@ class Shipment {
       );
 }
 
-// ── User ────────────────────────────────────────────
+// ── User ────────────────────────────────────────────────
 class AppUser {
   final int id;
   final String name;
