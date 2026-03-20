@@ -2,17 +2,18 @@ const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const User = require('../models/userModel');
 const Store = require('../models/storeModel');
+const Inventory = require('../models/inventoryModel');
 const { sendOrderConfirmation } = require('../utils/emailService');
+const { generateBrokerPDF, generateGodownPDF } = require('../utils/pdfService');
 
 const orderController = {
   // POST /api/orders
   async create(req, res) {
     try {
-      const { items, store_name } = req.body;
+      const { items, store_name, store_address } = req.body;
       if (!items || items.length === 0) {
         return res.status(400).json({ error: 'Order must have at least one item.' });
       }
-      // Brokers must provide store_name
       if (req.user.role === 'broker' && (!store_name || !store_name.trim())) {
         return res.status(400).json({ error: 'Store name is required for brokers.' });
       }
@@ -30,10 +31,12 @@ const orderController = {
           product_id: item.product_id,
           bundles_ordered: item.bundles_ordered,
           sarees_count,
+          set_size: product.set_size,
           price_per_saree: product.price_per_saree,
           bundle_cost,
           product_name: product.product_name,
           product_code: product.product_code,
+          images: product.images || [],
         });
         total_sarees += sarees_count;
         total_amount += bundle_cost;
@@ -42,19 +45,57 @@ const orderController = {
       const orderId = await Order.create({
         user_id: req.user.id,
         store_name: store_name ? store_name.trim() : null,
+        store_address: store_address ? store_address.trim() : null,
         total_sarees,
         total_amount,
         items: processedItems,
       });
 
-      // Auto-save store name for future autocomplete
       if (req.user.role === 'broker' && store_name && store_name.trim()) {
         await Store.save(req.user.id, store_name.trim());
       }
 
       const order = await Order.findById(orderId);
       const user = await User.findById(req.user.id);
-      if (user && user.email) sendOrderConfirmation(user.email, order, processedItems);
+
+      // Generate PDFs asynchronously (don't block response)
+      setImmediate(async () => {
+        try {
+          // 1. Broker PDF — attach to email
+          const brokerPdf = await generateBrokerPDF(
+            order,
+            processedItems,
+            store_name ? store_name.trim() : null,
+            store_address ? store_address.trim() : null
+          );
+
+          // 2. Send email with PDF attached
+          if (user && user.email) {
+            await sendOrderConfirmation(user.email, order, processedItems, brokerPdf);
+          }
+
+          // 3. Godown Copy — fetch inventory info per product and save to disk
+          const itemsWithInventory = await Promise.all(processedItems.map(async (item) => {
+            const inv = await Inventory.findByProduct(item.product_id);
+            const latest = inv && inv.length > 0 ? inv[0] : {};
+            return {
+              ...item,
+              godown_name: latest.godown_name || null,
+              rack_number: latest.rack_number || null,
+              shelf_number: latest.shelf_number || null,
+            };
+          }));
+
+          await generateGodownPDF(
+            order,
+            itemsWithInventory,
+            store_name ? store_name.trim() : null
+          );
+        } catch (pdfErr) {
+          console.error('PDF/Email generation error:', pdfErr);
+        }
+      });
+
       res.status(201).json(order);
     } catch (err) {
       console.error(err);
