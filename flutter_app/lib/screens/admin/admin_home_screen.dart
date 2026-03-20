@@ -32,7 +32,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final isWide = MediaQuery.of(context).size.width >= 600;
 
     if (isWide) {
-      // Tablet: NavigationRail
       return Scaffold(
         body: Row(
           children: [
@@ -67,7 +66,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       );
     }
 
-    // Mobile: BottomNavigationBar
     return Scaffold(
       body: _pages[_index],
       bottomNavigationBar: BottomNavigationBar(
@@ -124,7 +122,6 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      // KPI Cards
                       GridView.count(
                         crossAxisCount: 2,
                         shrinkWrap: true,
@@ -186,7 +183,7 @@ class _KpiCard extends StatelessWidget {
   }
 }
 
-// ── Admin Orders Page (with all orders) ─────────────
+// ── Admin Orders Page ────────────────────────────────
 class _AdminOrdersPage extends StatefulWidget {
   const _AdminOrdersPage();
 
@@ -214,6 +211,48 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
 
   List<Order> get _filtered => _filter == 'all' ? _orders : _orders.where((o) => o.status == _filter).toList();
 
+  Future<void> _deleteOrder(Order order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Order'),
+        content: Text('Delete Order #${order.id} for ${order.userName ?? "Customer"}?\nInventory will be restored automatically.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await ApiService.deleteOrder(order.id);
+      setState(() => _orders.removeWhere((o) => o.id == order.id));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order #${order.id} deleted & inventory restored'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -222,7 +261,6 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
           ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
           : Column(
               children: [
-                // Filter chips
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.all(12),
@@ -248,7 +286,19 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                         child: ListTile(
                           title: Text('#${o.id} — ${o.userName ?? "Customer"}'),
                           subtitle: Text('${o.totalSarees} sarees • ${o.status}'),
-                          trailing: Text('₹${o.totalAmount.toStringAsFixed(0)}', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('₹${o.totalAmount.toStringAsFixed(0)}',
+                                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(LucideIcons.trash2, color: Colors.red, size: 20),
+                                tooltip: 'Delete Order',
+                                onPressed: () => _deleteOrder(o),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },

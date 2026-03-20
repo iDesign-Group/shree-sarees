@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
 class ApiService {
-  // Auto-detect: localhost for web browser, LAN IP for real device
   static final String baseUrl = kIsWeb
       ? 'http://localhost:3000'
       : 'http://192.168.1.11:3000';
@@ -52,11 +51,8 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('user');
     if (userStr == null) return null;
-
-    // Restore token into memory on app start
     final token = prefs.getString('token');
     if (token != null) _memoryToken = token;
-
     return AppUser.fromJson(jsonDecode(userStr));
   }
 
@@ -114,6 +110,17 @@ class ApiService {
     );
     if (res.statusCode != 200) throw Exception('Failed to load order');
     return Order.fromJson(jsonDecode(res.body));
+  }
+
+  static Future<void> deleteOrder(int id) async {
+    final res = await http.delete(
+      Uri.parse('$baseUrl/api/orders/$id'),
+      headers: await _headers(),
+    );
+    if (res.statusCode != 200) {
+      final data = jsonDecode(res.body);
+      throw Exception(data['error'] ?? 'Failed to delete order');
+    }
   }
 
   // ── Shipments ───────────────────────────────────────
