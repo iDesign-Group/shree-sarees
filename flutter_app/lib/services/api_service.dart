@@ -20,14 +20,14 @@ class ApiService {
     final token = await _getToken();
     return {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer \$token',
+      if (token != null) 'Authorization': 'Bearer $token',
     };
   }
 
   // ── Auth ────────────────────────────────────────────
   static Future<Map<String, dynamic>> login(String email, String password) async {
     final res = await http.post(
-      Uri.parse('\$baseUrl/api/auth/login'),
+      Uri.parse('$baseUrl/api/auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
@@ -64,7 +64,7 @@ class ApiService {
   // ── Products ────────────────────────────────────────
   static Future<List<Product>> getProducts() async {
     final res = await http.get(
-      Uri.parse('\$baseUrl/api/products'),
+      Uri.parse('$baseUrl/api/products'),
       headers: await _headers(),
     );
     if (res.statusCode != 200) throw Exception('Failed to load products');
@@ -74,7 +74,7 @@ class ApiService {
 
   static Future<Product> getProduct(int id) async {
     final res = await http.get(
-      Uri.parse('\$baseUrl/api/products/\$id'),
+      Uri.parse('$baseUrl/api/products/$id'),
       headers: await _headers(),
     );
     if (res.statusCode != 200) throw Exception('Failed to load product');
@@ -84,7 +84,7 @@ class ApiService {
   // ── Orders ──────────────────────────────────────────
   static Future<Order> placeOrder(List<Map<String, dynamic>> items) async {
     final res = await http.post(
-      Uri.parse('\$baseUrl/api/orders'),
+      Uri.parse('$baseUrl/api/orders'),
       headers: await _headers(),
       body: jsonEncode({'items': items}),
     );
@@ -95,7 +95,7 @@ class ApiService {
 
   static Future<List<Order>> getOrders() async {
     final res = await http.get(
-      Uri.parse('\$baseUrl/api/orders'),
+      Uri.parse('$baseUrl/api/orders'),
       headers: await _headers(),
     );
     if (res.statusCode != 200) throw Exception('Failed to load orders');
@@ -105,7 +105,7 @@ class ApiService {
 
   static Future<Order> getOrder(int id) async {
     final res = await http.get(
-      Uri.parse('\$baseUrl/api/orders/\$id'),
+      Uri.parse('$baseUrl/api/orders/$id'),
       headers: await _headers(),
     );
     if (res.statusCode != 200) throw Exception('Failed to load order');
@@ -114,7 +114,7 @@ class ApiService {
 
   static Future<void> cancelOrder(int id) async {
     final res = await http.post(
-      Uri.parse('\$baseUrl/api/orders/\$id/cancel'),
+      Uri.parse('$baseUrl/api/orders/$id/cancel'),
       headers: await _headers(),
     );
     if (res.statusCode != 200) {
@@ -125,7 +125,7 @@ class ApiService {
 
   static Future<void> deleteOrder(int id) async {
     final res = await http.delete(
-      Uri.parse('\$baseUrl/api/orders/\$id'),
+      Uri.parse('$baseUrl/api/orders/$id'),
       headers: await _headers(),
     );
     if (res.statusCode != 200) {
@@ -137,7 +137,7 @@ class ApiService {
   // ── Shipments ───────────────────────────────────────
   static Future<Shipment?> getShipment(int orderId) async {
     final res = await http.get(
-      Uri.parse('\$baseUrl/api/shipments/\$orderId'),
+      Uri.parse('$baseUrl/api/shipments/$orderId'),
       headers: await _headers(),
     );
     if (res.statusCode == 404) return null;
@@ -148,7 +148,7 @@ class ApiService {
   // ── Users (Admin) ────────────────────────────────────
   static Future<List<AppUser>> getUsers() async {
     final res = await http.get(
-      Uri.parse('\$baseUrl/api/users'),
+      Uri.parse('$baseUrl/api/users'),
       headers: await _headers(),
     );
     if (res.statusCode != 200) throw Exception('Failed to load users');
