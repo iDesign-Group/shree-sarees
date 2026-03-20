@@ -49,6 +49,50 @@ const Order = {
     }
   },
 
+  async delete(id) {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+
+      // Get all order items to restore inventory
+      const [items] = await conn.query(
+        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?',
+        [id]
+      );
+
+      // Restore inventory FIFO (add back to oldest entries first)
+      for (const item of items) {
+        let bundlesToRestore = item.bundles_ordered;
+        const [invRows] = await conn.query(
+          `SELECT id, bundle_count FROM inventory
+           WHERE product_id = ?
+           ORDER BY inward_date ASC`,
+          [item.product_id]
+        );
+
+        for (const inv of invRows) {
+          if (bundlesToRestore <= 0) break;
+          await conn.query(
+            `UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`,
+            [bundlesToRestore, inv.id]
+          );
+          bundlesToRestore = 0;
+        }
+      }
+
+      // Delete order items and order
+      await conn.query('DELETE FROM order_items WHERE order_id = ?', [id]);
+      await conn.query('DELETE FROM orders WHERE id = ?', [id]);
+
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  },
+
   async findAll() {
     const [rows] = await pool.query(`
       SELECT o.*, u.name AS user_name, u.email AS user_email

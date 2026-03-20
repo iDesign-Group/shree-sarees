@@ -11,5 +11,6 @@ router.get('/:id', verifyToken, checkLoginExpiry, orderController.detail);
 
 // Admin only
 router.put('/:id/status', verifyToken, adminOnly, orderController.updateStatus);
+router.delete('/:id', verifyToken, adminOnly, orderController.remove);
 
 module.exports = router;

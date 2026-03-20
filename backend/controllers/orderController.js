@@ -7,7 +7,7 @@ const orderController = {
   // POST /api/orders
   async create(req, res) {
     try {
-      const { items } = req.body; // [{ product_id, bundles_ordered }]
+      const { items } = req.body;
       if (!items || items.length === 0) {
         return res.status(400).json({ error: 'Order must have at least one item.' });
       }
@@ -83,7 +83,6 @@ const orderController = {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ error: 'Order not found.' });
 
-      // Non-admin can only see own orders
       if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
         return res.status(403).json({ error: 'Forbidden.' });
       }
@@ -109,6 +108,20 @@ const orderController = {
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Failed to update order status.' });
+    }
+  },
+
+  // DELETE /api/orders/:id (admin)
+  async remove(req, res) {
+    try {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ error: 'Order not found.' });
+
+      await Order.delete(req.params.id);
+      res.json({ message: `Order #${req.params.id} deleted and inventory restored.` });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to delete order.' });
     }
   },
 };
