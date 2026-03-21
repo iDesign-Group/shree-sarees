@@ -41,24 +41,38 @@ function drawHeader(doc, title) {
 /**
  * Draw order meta info block
  */
-function drawOrderMeta(doc, order, storeName, storeAddress) {
+function drawOrderMeta(doc, order, storeName, storeAddress, storePhone) {
   const startY = doc.y;
-  doc.rect(30, startY, doc.page.width - 60, storeName ? 85 : 55).fill(LIGHT_BG);
+  let boxH = 52;
+  if (storeName) {
+    boxH = 78;
+    if (storeAddress) boxH += 36;
+    if (storePhone) boxH += 16;
+  }
+  doc.rect(30, startY, doc.page.width - 60, boxH).fill(LIGHT_BG);
   doc.fillColor(TEXT_DARK);
 
   doc.font('Helvetica-Bold').fontSize(11).text(`Order #${order.id}`, 45, startY + 10);
   doc.font('Helvetica').fontSize(10).fillColor(TEXT_GREY)
     .text(`Date: ${new Date(order.order_date || order.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, 45, startY + 26);
 
+  let y = startY + 42;
   if (storeName) {
-    doc.font('Helvetica-Bold').fontSize(10).fillColor(MAROON).text('Store:', 45, startY + 44);
-    doc.font('Helvetica').fontSize(10).fillColor(TEXT_DARK).text(storeName, 85, startY + 44);
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(MAROON).text('Store:', 45, y);
+    doc.font('Helvetica').fontSize(10).fillColor(TEXT_DARK).text(storeName, 88, y);
+    y += 16;
     if (storeAddress) {
-      doc.font('Helvetica').fontSize(9).fillColor(TEXT_GREY).text(storeAddress, 45, startY + 58, { width: doc.page.width - 90 });
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(MAROON).text('Address:', 45, y);
+      doc.font('Helvetica').fontSize(9).fillColor(TEXT_GREY).text(storeAddress, 45, y + 12, { width: doc.page.width - 90 });
+      y += 36;
+    }
+    if (storePhone) {
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(MAROON).text('Contact:', 45, y);
+      doc.font('Helvetica').fontSize(9).fillColor(TEXT_DARK).text(storePhone, 92, y);
     }
   }
 
-  doc.y = startY + (storeName ? 95 : 65);
+  doc.y = startY + boxH + 8;
   doc.fillColor(TEXT_DARK);
 }
 
@@ -145,7 +159,7 @@ function drawTotals(doc, order) {
  * Generate BROKER PDF — store details + product images, bundles, costs
  * Returns a Buffer
  */
-async function generateBrokerPDF(order, items, storeName, storeAddress) {
+async function generateBrokerPDF(order, items, storeName, storeAddress, storePhone) {
   return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 30, size: 'A4' });
@@ -155,7 +169,7 @@ async function generateBrokerPDF(order, items, storeName, storeAddress) {
       doc.on('error', reject);
 
       drawHeader(doc, `Order Copy — ${storeName || 'Order'}`);
-      drawOrderMeta(doc, order, storeName, storeAddress);
+      drawOrderMeta(doc, order, storeName, storeAddress, storePhone);
 
       doc.font('Helvetica-Bold').fontSize(12).fillColor(MAROON).text('Order Items', 30, doc.y + 6);
       doc.moveDown(0.3);
@@ -197,7 +211,7 @@ async function generateGodownPDF(order, itemsWithInventory, storeName) {
       stream.on('error', reject);
 
       drawHeader(doc, `Godown Copy — Order #${order.id}`);
-      drawOrderMeta(doc, order, storeName, null);
+      drawOrderMeta(doc, order, storeName, order.store_address || null, order.store_phone || null);
 
       doc.font('Helvetica-Bold').fontSize(12).fillColor(MAROON).text('Order Items (Godown Copy)', 30, doc.y + 6);
       doc.moveDown(0.3);

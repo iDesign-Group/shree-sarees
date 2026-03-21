@@ -1,3 +1,4 @@
+
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
@@ -33,6 +34,8 @@ const sendOrderConfirmation = async (toEmail, order, items, brokerPdfBuffer) => 
         <h2 style="font-family:'Playfair Display',Georgia,serif;color:#1C1C1C;margin-top:0;">Order Confirmed \u2705</h2>
         <p style="color:#6B6B6B;">Your order <strong style="color:#C9A84C;">#${order.id}</strong> has been placed successfully.</p>
         ${order.store_name ? `<p style="color:#6B6B6B;"><strong>Store:</strong> ${order.store_name}</p>` : ''}
+        ${order.store_address ? `<p style="color:#6B6B6B;"><strong>Address:</strong> ${order.store_address}</p>` : ''}
+        ${order.store_phone ? `<p style="color:#6B6B6B;"><strong>Contact:</strong> ${order.store_phone}</p>` : ''}
         <table style="width:100%;border-collapse:collapse;margin:16px 0;">
           <thead>
             <tr style="background:#FAF7F2;">
