@@ -26,6 +26,9 @@
           <span> <strong>Store:</strong> <%= order.store_name || '-' %></span> &nbsp;|
           <span> <strong>Date:</strong> <%= new Date(order.order_date).toLocaleDateString('en-IN') %></span>
         </div>
+        <div style="color:#6B6B6B;font-size:12px;margin-top:2px;">
+          <strong>Credit Period:</strong> <%= order.creditPeriodLabel %>
+        </div>
         <% if (order.store_address) { %>
         <div style="color:#6B6B6B;font-size:12px;margin-top:2px;">
           <strong>Deliver to:</strong> <%= order.store_address %>
@@ -44,6 +47,9 @@
           <th>Code</th>
           <th>Bundles</th>
           <th>Sarees</th>
+          <th>Rate/Pc</th>
+          <th>Rate/Bundle</th>
+          <th>Line Total</th>
           <th>Warehouse</th>
           <th>Rack No.</th>
           <th>Shelf No.</th>
@@ -67,6 +73,9 @@
           <td style="font-size:13px;color:#6B6B6B;"><%= item.product_code %></td>
           <td style="text-align:center;"><%= item.bundles_ordered %></td>
           <td style="text-align:center;"><%= item.sarees_count %></td>
+          <td style="text-align:right;">&#8377;<%= Number(item.price_per_saree_at_order || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+          <td style="text-align:right;">&#8377;<%= Number(item.pricePerBundle || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+          <td style="text-align:right;font-weight:600;">&#8377;<%= Number(item.bundle_cost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
           <td style="font-weight:500;"><%= item.godown_name || '-' %></td>
           <td style="text-align:center;"><%= item.rack_number || '-' %></td>
           <td style="text-align:center;"><%= item.shelf_number || '-' %></td>
@@ -77,6 +86,23 @@
         <% }) %>
       </tbody>
     </table>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <table style="border-collapse:collapse;min-width:340px;font-size:13px;">
+        <tr>
+          <td style="padding:6px 10px;color:#6B6B6B;">Total Bundles</td>
+          <td style="padding:6px 10px;text-align:right;font-weight:600;"><%= order.totalBundles %></td>
+        </tr>
+        <tr>
+          <td style="padding:6px 10px;color:#6B6B6B;">Total Sarees</td>
+          <td style="padding:6px 10px;text-align:right;font-weight:600;"><%= order.totalSarees %></td>
+        </tr>
+        <tr>
+          <td style="padding:6px 10px;color:#6B6B6B;">Total Amount</td>
+          <td style="padding:6px 10px;text-align:right;font-weight:700;font-size:15px;">&#8377;<%= Number(order.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+        </tr>
+      </table>
+    </div>
   </div>
   <% }) %>
 </div>
