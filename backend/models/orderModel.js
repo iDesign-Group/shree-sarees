@@ -174,8 +174,15 @@ const Order = {
     return rows[0].count;
   },
 
-  // feat: delivery challan — fetch all pending/confirmed orders with product + inventory location details
-  async getDeliveryChallanItems() {
+  // feat: delivery challan — fetch pending/confirmed order items with one best inventory location per product
+  async getDeliveryChallanItems(orderId = null) {
+    const params = [];
+    let orderFilter = '';
+    if (orderId) {
+      orderFilter = ' AND o.id = ?';
+      params.push(orderId);
+    }
+
     const [rows] = await pool.query(`
       SELECT
         o.id            AS order_id,
@@ -187,24 +194,54 @@ const Order = {
         oi.id           AS item_id,
         oi.bundles_ordered,
         oi.sarees_count,
+        oi.price_per_saree_at_order,
+        oi.bundle_cost,
         p.id            AS product_id,
         p.product_code,
         p.product_name,
-        p.image_url,
-        g.name          AS godown_name,
-        r.rack_number,
-        s.shelf_number
+        p.set_size,
+        (
+          SELECT pi.image_path
+          FROM product_images pi
+          WHERE pi.product_id = p.id
+          ORDER BY pi.id ASC
+          LIMIT 1
+        )               AS image_url,
+        (
+          SELECT g2.name
+          FROM inventory i2
+          JOIN shelves s2 ON i2.shelf_id = s2.id
+          JOIN racks r2 ON s2.rack_id = r2.id
+          JOIN godowns g2 ON r2.godown_id = g2.id
+          WHERE i2.product_id = p.id AND i2.bundle_count > 0
+          ORDER BY i2.bundle_count DESC, i2.inward_date ASC
+          LIMIT 1
+        )               AS godown_name,
+        (
+          SELECT r2.rack_number
+          FROM inventory i2
+          JOIN shelves s2 ON i2.shelf_id = s2.id
+          JOIN racks r2 ON s2.rack_id = r2.id
+          WHERE i2.product_id = p.id AND i2.bundle_count > 0
+          ORDER BY i2.bundle_count DESC, i2.inward_date ASC
+          LIMIT 1
+        )               AS rack_number,
+        (
+          SELECT s2.shelf_number
+          FROM inventory i2
+          JOIN shelves s2 ON i2.shelf_id = s2.id
+          WHERE i2.product_id = p.id AND i2.bundle_count > 0
+          ORDER BY i2.bundle_count DESC, i2.inward_date ASC
+          LIMIT 1
+        )               AS shelf_number
       FROM orders o
       JOIN users u        ON o.user_id = u.id
       JOIN order_items oi ON oi.order_id = o.id
       JOIN products p     ON oi.product_id = p.id
-      LEFT JOIN inventory i  ON i.product_id = p.id AND i.bundle_count > 0
-      LEFT JOIN shelves s    ON i.shelf_id = s.id
-      LEFT JOIN racks r      ON s.rack_id = r.id
-      LEFT JOIN godowns g    ON r.godown_id = g.id
       WHERE o.status IN ('pending', 'confirmed')
+      ${orderFilter}
       ORDER BY o.order_date DESC, o.id, oi.id
-    `);
+    `, params);
     return rows;
   },
 };
