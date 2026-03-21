@@ -10,12 +10,20 @@ const orderController = {
   // POST /api/orders
   async create(req, res) {
     try {
-      const { items, store_name, store_address } = req.body;
+      const { items, store_name, store_address, store_phone } = req.body;
       if (!items || items.length === 0) {
         return res.status(400).json({ error: 'Order must have at least one item.' });
       }
-      if (req.user.role === 'broker' && (!store_name || !store_name.trim())) {
-        return res.status(400).json({ error: 'Store name is required for brokers.' });
+      if (req.user.role === 'broker') {
+        if (!store_name || !store_name.trim()) {
+          return res.status(400).json({ error: 'Store name is required for brokers.' });
+        }
+        if (!store_address || !String(store_address).trim()) {
+          return res.status(400).json({ error: 'Store address is required for brokers.' });
+        }
+        if (!store_phone || !String(store_phone).trim()) {
+          return res.status(400).json({ error: 'Store contact number is required for brokers.' });
+        }
       }
 
       let total_sarees = 0;
@@ -45,7 +53,8 @@ const orderController = {
       const orderId = await Order.create({
         user_id: req.user.id,
         store_name: store_name ? store_name.trim() : null,
-        store_address: store_address ? store_address.trim() : null,
+        store_address: store_address ? String(store_address).trim() : null,
+        store_phone: store_phone ? String(store_phone).trim() : null,
         total_sarees,
         total_amount,
         items: processedItems,
@@ -66,7 +75,8 @@ const orderController = {
             order,
             processedItems,
             store_name ? store_name.trim() : null,
-            store_address ? store_address.trim() : null
+            store_address ? String(store_address).trim() : null,
+            store_phone ? String(store_phone).trim() : null
           );
 
           // 2. Send email with PDF attached

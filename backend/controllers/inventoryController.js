@@ -46,6 +46,47 @@ const inventoryController = {
     }
   },
 
+  // PUT /api/inventory/:id (admin) — correct inward quantity / date / shelf
+  async updateInward(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isFinite(id)) {
+        return res.status(400).json({ error: 'Invalid inventory id.' });
+      }
+      const { bundle_count, shelf_id, inward_date } = req.body;
+      if (bundle_count == null || !shelf_id || !inward_date) {
+        return res.status(400).json({ error: 'bundle_count, shelf_id, and inward_date are required.' });
+      }
+
+      const updated = await Inventory.updateInward(id, {
+        bundle_count,
+        shelf_id,
+        inward_date,
+      });
+
+      res.json({
+        message: 'Inward record updated.',
+        id: updated.id,
+        bundle_count: updated.bundle_count,
+        total_sarees: updated.total_sarees,
+        shelf_id: updated.shelf_id,
+        inward_date: updated.inward_date,
+      });
+    } catch (err) {
+      console.error(err);
+      if (err.message === 'Inventory row not found') {
+        return res.status(404).json({ error: err.message });
+      }
+      if (
+        err.message.includes('Bundle count') ||
+        err.message.includes('Invalid shelf')
+      ) {
+        return res.status(400).json({ error: err.message });
+      }
+      res.status(500).json({ error: 'Failed to update inward stock.' });
+    }
+  },
+
   // GET /api/inventory/product/:id
   async byProduct(req, res) {
     try {
