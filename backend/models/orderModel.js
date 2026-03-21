@@ -1,14 +1,15 @@
 const pool = require('./db');
 
 const Order = {
-  async create({ user_id, store_name, total_sarees, total_amount, items }) {
+  // Bug Fix #1: Added store_address to create() signature and SQL INSERT
+  async create({ user_id, store_name, store_address, total_sarees, total_amount, items }) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
 
       const [orderResult] = await conn.query(
-        'INSERT INTO orders (user_id, store_name, total_sarees, total_amount) VALUES (?, ?, ?, ?)',
-        [user_id, store_name || null, total_sarees, total_amount]
+        'INSERT INTO orders (user_id, store_name, store_address, total_sarees, total_amount) VALUES (?, ?, ?, ?, ?)',
+        [user_id, store_name || null, store_address || null, total_sarees, total_amount]
       );
       const orderId = orderResult.insertId;
 
@@ -47,6 +48,7 @@ const Order = {
     }
   },
 
+  // Bug Fix #3: Fixed inventory restore in cancel() to distribute proportionally across rows (FIFO-reverse)
   async cancel(id) {
     const conn = await pool.getConnection();
     try {
@@ -61,15 +63,20 @@ const Order = {
       );
       for (const item of items) {
         let bundlesToRestore = item.bundles_ordered;
+        // Restore in reverse FIFO order (latest inward first)
         const [invRows] = await conn.query(
-          `SELECT id FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`, [item.product_id]
+          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date DESC`, [item.product_id]
         );
         for (const inv of invRows) {
           if (bundlesToRestore <= 0) break;
-          await conn.query(`UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`, [bundlesToRestore, inv.id]);
+          await conn.query(
+            `UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`,
+            [bundlesToRestore, inv.id]
+          );
           bundlesToRestore = 0;
         }
       }
+
       await conn.query(`UPDATE orders SET status = 'cancelled' WHERE id = ?`, [id]);
       await conn.commit();
     } catch (err) {
@@ -80,6 +87,7 @@ const Order = {
     }
   },
 
+  // Bug Fix #3 (same): Fixed inventory restore in delete() to distribute across rows
   async delete(id) {
     const conn = await pool.getConnection();
     try {
@@ -89,15 +97,20 @@ const Order = {
       );
       for (const item of items) {
         let bundlesToRestore = item.bundles_ordered;
+        // Restore in reverse FIFO order (latest inward first)
         const [invRows] = await conn.query(
-          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date ASC`, [item.product_id]
+          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date DESC`, [item.product_id]
         );
         for (const inv of invRows) {
           if (bundlesToRestore <= 0) break;
-          await conn.query(`UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`, [bundlesToRestore, inv.id]);
+          await conn.query(
+            `UPDATE inventory SET bundle_count = bundle_count + ? WHERE id = ?`,
+            [bundlesToRestore, inv.id]
+          );
           bundlesToRestore = 0;
         }
       }
+
       await conn.query('DELETE FROM order_items WHERE order_id = ?', [id]);
       await conn.query('DELETE FROM orders WHERE id = ?', [id]);
       await conn.commit();
