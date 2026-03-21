@@ -41,15 +41,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               backgroundColor: AppTheme.primary,
               selectedIconTheme: const IconThemeData(color: AppTheme.accent),
               unselectedIconTheme: IconThemeData(color: Colors.white.withValues(alpha: 0.6)),
-              selectedLabelTextStyle: GoogleFonts.inter(color: AppTheme.accent, fontSize: 11, fontWeight: FontWeight.w600),
-              unselectedLabelTextStyle: GoogleFonts.inter(color: Colors.white70, fontSize: 11),
+              selectedLabelTextStyle: GoogleFonts.plusJakartaSans(color: AppTheme.accent, fontSize: 11, fontWeight: FontWeight.w600),
+              unselectedLabelTextStyle: GoogleFonts.plusJakartaSans(color: Colors.white70, fontSize: 11),
               leading: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(8)),
                   alignment: Alignment.center,
-                  child: Text('SS', style: GoogleFonts.playfairDisplay(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.primaryDark)),
+                  child: Text('SS', style: GoogleFonts.sourceSerif4(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.primaryDark)),
                 ),
               ),
               destinations: const [
@@ -128,16 +128,16 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      Text('Recent Orders', style: GoogleFonts.playfairDisplay(fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text('Recent Orders', style: GoogleFonts.sourceSerif4(fontSize: 18, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       ...(_stats!['recentOrders'] as List<Order>).map((o) => Card(
                         child: ListTile(
                           leading: CircleAvatar(backgroundColor: AppTheme.accent.withValues(alpha: 0.2),
-                              child: Text('#${o.id}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.accent))),
+                              child: Text('#${o.id}', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.accent))),
                           title: Text(o.userName ?? 'Customer'),
                           subtitle: Text('${o.totalSarees} sarees \u2022 ${o.status}${o.storeName != null ? " \u2022 ${o.storeName}" : ""}'),
                           trailing: Text('\u20b9${o.totalAmount.toStringAsFixed(0)}',
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: AppTheme.primary)),
                         ),
                       )),
                     ],
@@ -165,8 +165,8 @@ class _KpiCard extends StatelessWidget {
           children: [
             Icon(icon, color: AppTheme.primary, size: 22),
             const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.playfairDisplay(fontSize: 28, fontWeight: FontWeight.w700)),
-            Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
+            Text(value, style: GoogleFonts.sourceSerif4(fontSize: 28, fontWeight: FontWeight.w700)),
+            Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondary)),
           ],
         ),
       ),
@@ -204,6 +204,7 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
       case 'shipped': return AppTheme.primary;
       case 'delivered': return AppTheme.success;
       case 'cancelled': return Colors.red;
+      case 'unknown': return Colors.grey;
       default: return AppTheme.textSecondary;
     }
   }
@@ -227,22 +228,7 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
     if (confirmed != true) return;
     try {
       await ApiService.cancelOrder(order.id);
-      setState(() {
-        final idx = _orders.indexWhere((o) => o.id == order.id);
-        if (idx != -1) {
-          _orders[idx] = Order(
-            id: _orders[idx].id,
-            userId: _orders[idx].userId,
-            status: 'cancelled',
-            orderDate: _orders[idx].orderDate,
-            totalSarees: _orders[idx].totalSarees,
-            totalAmount: _orders[idx].totalAmount,
-            userName: _orders[idx].userName,
-            storeName: _orders[idx].storeName,
-            items: _orders[idx].items,
-          );
-        }
-      });
+      await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Order #${order.id} cancelled & inventory restored'),
@@ -285,7 +271,7 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                     itemCount: _filtered.length,
                     itemBuilder: (_, i) {
                       final o = _filtered[i];
-                      final canCancel = o.status != 'cancelled' && o.status != 'delivered';
+                      final canCancel = o.canAdminCancel;
                       return Card(
                         child: ListTile(
                           title: Text('#${o.id} \u2014 ${o.userName ?? "Customer"}'),
@@ -302,11 +288,11 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(o.status,
-                                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor(o.status))),
+                                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor(o.status))),
                                   ),
                                   const SizedBox(width: 6),
                                   Text('${o.totalSarees} sarees',
-                                      style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondary)),
                                 ],
                               ),
                               if (o.storeName != null && o.storeName!.isNotEmpty)
@@ -317,7 +303,7 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                                       const Icon(Icons.store_outlined, size: 13, color: AppTheme.accent),
                                       const SizedBox(width: 4),
                                       Text(o.storeName!,
-                                          style: GoogleFonts.inter(fontSize: 12, color: AppTheme.accent, fontWeight: FontWeight.w600)),
+                                          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.accent, fontWeight: FontWeight.w600)),
                                     ],
                                   ),
                                 ),
@@ -327,7 +313,7 @@ class _AdminOrdersPageState extends State<_AdminOrdersPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text('\u20b9${o.totalAmount.toStringAsFixed(0)}',
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: AppTheme.primary)),
                               const SizedBox(width: 8),
                               if (canCancel)
                                 IconButton(
