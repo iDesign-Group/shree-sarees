@@ -319,6 +319,121 @@ async function submitInward() {
   }
 }
 
+function calcEditInwardSarees() {
+  const setSize = parseInt(document.getElementById('editInwardSetSize').value, 10) || 0;
+  const bundles = parseInt(document.getElementById('editInwardBundles').value, 10) || 0;
+  const el = document.getElementById('editInwardSareesCalc');
+  if (el) el.textContent = `Total sarees: ${bundles * setSize}`;
+}
+
+async function editInwardLoadRacks() {
+  const godownId = document.getElementById('editInwardGodown').value;
+  const rackSelect = document.getElementById('editInwardRack');
+  const shelfSelect = document.getElementById('editInwardShelf');
+  rackSelect.innerHTML = '<option value="">Select Rack</option>';
+  shelfSelect.innerHTML = '<option value="">Select Shelf</option>';
+  shelfSelect.disabled = true;
+  if (!godownId) {
+    rackSelect.disabled = true;
+    return;
+  }
+  try {
+    const racks = await apiCall(`/api/inventory/racks/${godownId}`);
+    racks.forEach((r) => {
+      rackSelect.innerHTML += `<option value="${r.id}">${r.rack_number}</option>`;
+    });
+    rackSelect.disabled = false;
+  } catch (err) {
+    showToast('Failed to load racks.', 'error');
+  }
+}
+
+async function editInwardLoadShelves() {
+  const rackId = document.getElementById('editInwardRack').value;
+  const shelfSelect = document.getElementById('editInwardShelf');
+  shelfSelect.innerHTML = '<option value="">Select Shelf</option>';
+  shelfSelect.disabled = true;
+  if (!rackId) return;
+  try {
+    const shelves = await apiCall(`/api/inventory/shelves/${rackId}`);
+    shelves.forEach((s) => {
+      shelfSelect.innerHTML += `<option value="${s.id}">${s.shelf_number}</option>`;
+    });
+    shelfSelect.disabled = false;
+  } catch (err) {
+    showToast('Failed to load shelves.', 'error');
+  }
+}
+
+async function openEditInwardDrawer(btn) {
+  const tr = btn.closest('tr');
+  if (!tr || !tr.dataset.invId) return;
+  const id = tr.dataset.invId;
+  const setSize = parseInt(tr.dataset.setSize, 10);
+  const bundle = tr.dataset.bundle;
+  const godownId = tr.dataset.godownId;
+  const rackId = tr.dataset.rackId;
+  const shelfId = tr.dataset.shelfId;
+  const inwardDate = tr.dataset.inwardDate;
+  const firstTd = tr.querySelector('td');
+  const productLabel = firstTd ? firstTd.innerText.replace(/\s+/g, ' ').trim() : '';
+
+  document.getElementById('editInwardId').value = id;
+  document.getElementById('editInwardSetSize').value = setSize;
+  document.getElementById('editInwardProductLabel').textContent = productLabel;
+  document.getElementById('editInwardBundles').value = bundle;
+  document.getElementById('editInwardDate').value = inwardDate || '';
+  calcEditInwardSarees();
+
+  document.getElementById('editInwardGodown').value = godownId || '';
+  await editInwardLoadRacks();
+  document.getElementById('editInwardRack').value = rackId || '';
+  await editInwardLoadShelves();
+  document.getElementById('editInwardShelf').value = shelfId || '';
+
+  document.getElementById('editInwardOverlay').classList.add('open');
+  document.getElementById('editInwardDrawer').classList.add('open');
+}
+
+function closeEditInwardDrawer() {
+  const o = document.getElementById('editInwardOverlay');
+  const d = document.getElementById('editInwardDrawer');
+  if (o) o.classList.remove('open');
+  if (d) d.classList.remove('open');
+}
+
+async function submitEditInward() {
+  const id = document.getElementById('editInwardId').value;
+  const bundle_count = parseInt(document.getElementById('editInwardBundles').value, 10);
+  const shelf_id = document.getElementById('editInwardShelf').value;
+  const inward_date = document.getElementById('editInwardDate').value;
+  if (!id) return;
+  if (!bundle_count || bundle_count < 1) {
+    showToast('Enter a valid bundle count.', 'warning');
+    return;
+  }
+  if (!shelf_id) {
+    showToast('Select godown, rack, and shelf.', 'warning');
+    return;
+  }
+  if (!inward_date) {
+    showToast('Select inward date.', 'warning');
+    return;
+  }
+  try {
+    await apiCall(`/api/inventory/${id}`, 'PUT', {
+      bundle_count,
+      shelf_id: parseInt(shelf_id, 10),
+      inward_date,
+    });
+    showToast('Inward stock updated.');
+    closeEditInwardDrawer();
+    setTimeout(() => location.reload(), 500);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
 // ═══════════════════════════════════════════════════
 // ORDERS
 // ═══════════════════════════════════════════════════
@@ -376,6 +491,20 @@ async function updateOrderStatus(orderId, status) {
     await apiCall(`/api/orders/${orderId}/status`, 'PUT', { status });
     showToast(`Order #${orderId} status updated to ${status}.`);
     setTimeout(() => location.reload(), 500);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/** Admin cancels order on instruction from broker/shop (restores inventory). */
+async function cancelOrder(orderId) {
+  if (!confirm(`Cancel order #${orderId}?\n\nInventory will be restored for this order. This action cannot be undone.`)) {
+    return;
+  }
+  try {
+    await apiCall(`/api/orders/${orderId}/cancel`, 'POST', {});
+    showToast(`Order #${orderId} has been cancelled.`);
+    setTimeout(() => location.reload(), 600);
   } catch (err) {
     showToast(err.message, 'error');
   }
