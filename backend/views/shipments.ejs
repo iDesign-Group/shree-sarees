@@ -90,4 +90,20 @@
   </table>
 </div>
 
+<script>
+// Auto-select order from query param (if orderId is present in URL)
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const orderId = urlParams.get('orderId');
+  if (orderId) {
+    // Find the order in the orders array
+    const orders = <%- JSON.stringify(orders) %>;
+    const order = orders.find(o => o.id == orderId);
+    if (order) {
+      selectOrderForShipment(order.id, order.user_name, order.total_sarees, order.total_amount, order.status);
+    }
+  }
+});
+</script>
+
 <%- include('layout/footer') %>
