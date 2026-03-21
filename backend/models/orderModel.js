@@ -59,13 +59,15 @@ const Order = {
       if (rows[0].status === 'delivered') throw new Error('Delivered orders cannot be cancelled');
 
       const [items] = await conn.query(
-        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?', [id]
+        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?',
+        [id]
       );
       for (const item of items) {
         let bundlesToRestore = item.bundles_ordered;
         // Restore in reverse FIFO order (latest inward first)
         const [invRows] = await conn.query(
-          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date DESC`, [item.product_id]
+          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date DESC`,
+          [item.product_id]
         );
         for (const inv of invRows) {
           if (bundlesToRestore <= 0) break;
@@ -76,7 +78,6 @@ const Order = {
           bundlesToRestore = 0;
         }
       }
-
       await conn.query(`UPDATE orders SET status = 'cancelled' WHERE id = ?`, [id]);
       await conn.commit();
     } catch (err) {
@@ -93,13 +94,15 @@ const Order = {
     try {
       await conn.beginTransaction();
       const [items] = await conn.query(
-        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?', [id]
+        'SELECT product_id, bundles_ordered FROM order_items WHERE order_id = ?',
+        [id]
       );
       for (const item of items) {
         let bundlesToRestore = item.bundles_ordered;
         // Restore in reverse FIFO order (latest inward first)
         const [invRows] = await conn.query(
-          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date DESC`, [item.product_id]
+          `SELECT id, bundle_count FROM inventory WHERE product_id = ? ORDER BY inward_date DESC`,
+          [item.product_id]
         );
         for (const inv of invRows) {
           if (bundlesToRestore <= 0) break;
@@ -110,7 +113,6 @@ const Order = {
           bundlesToRestore = 0;
         }
       }
-
       await conn.query('DELETE FROM order_items WHERE order_id = ?', [id]);
       await conn.query('DELETE FROM orders WHERE id = ?', [id]);
       await conn.commit();
@@ -134,7 +136,8 @@ const Order = {
 
   async findByUser(userId) {
     const [rows] = await pool.query(
-      `SELECT o.* FROM orders o WHERE o.user_id = ? ORDER BY o.order_date DESC`, [userId]
+      `SELECT o.* FROM orders o WHERE o.user_id = ? ORDER BY o.order_date DESC`,
+      [userId]
     );
     return rows;
   },
@@ -169,6 +172,40 @@ const Order = {
     }
     const [rows] = await pool.query('SELECT COUNT(*) as count FROM orders');
     return rows[0].count;
+  },
+
+  // feat: delivery challan — fetch all pending/confirmed orders with product + inventory location details
+  async getDeliveryChallanItems() {
+    const [rows] = await pool.query(`
+      SELECT
+        o.id            AS order_id,
+        o.order_date,
+        o.status,
+        o.store_name,
+        o.store_address,
+        u.name          AS customer_name,
+        oi.id           AS item_id,
+        oi.bundles_ordered,
+        oi.sarees_count,
+        p.id            AS product_id,
+        p.product_code,
+        p.product_name,
+        p.image_url,
+        g.name          AS godown_name,
+        r.rack_number,
+        s.shelf_number
+      FROM orders o
+      JOIN users u        ON o.user_id = u.id
+      JOIN order_items oi ON oi.order_id = o.id
+      JOIN products p     ON oi.product_id = p.id
+      LEFT JOIN inventory i  ON i.product_id = p.id AND i.bundle_count > 0
+      LEFT JOIN shelves s    ON i.shelf_id = s.id
+      LEFT JOIN racks r      ON s.rack_id = r.id
+      LEFT JOIN godowns g    ON r.godown_id = g.id
+      WHERE o.status IN ('pending', 'confirmed')
+      ORDER BY o.order_date DESC, o.id, oi.id
+    `);
+    return rows;
   },
 };
 
