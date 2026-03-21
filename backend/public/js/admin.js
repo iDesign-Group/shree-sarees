@@ -382,7 +382,7 @@ async function updateOrderStatus(orderId, status) {
 }
 
 function openShipmentForOrder(orderId) {
-  window.location.href = '/admin/shipments';
+      window.location.href = `/admin/shipments?orderId=${orderId}`;
 }
 
 // ═══════════════════════════════════════════════════
