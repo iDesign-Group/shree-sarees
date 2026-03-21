@@ -2,14 +2,14 @@ const pool = require('./db');
 
 const Order = {
   // Bug Fix #1: Added store_address to create() signature and SQL INSERT
-  async create({ user_id, store_name, store_address, total_sarees, total_amount, items }) {
+  async create({ user_id, store_name, store_address, store_phone, total_sarees, total_amount, items }) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
 
       const [orderResult] = await conn.query(
-        'INSERT INTO orders (user_id, store_name, store_address, total_sarees, total_amount) VALUES (?, ?, ?, ?, ?)',
-        [user_id, store_name || null, store_address || null, total_sarees, total_amount]
+        'INSERT INTO orders (user_id, store_name, store_address, store_phone, total_sarees, total_amount) VALUES (?, ?, ?, ?, ?, ?)',
+        [user_id, store_name || null, store_address || null, store_phone || null, total_sarees, total_amount]
       );
       const orderId = orderResult.insertId;
 
@@ -190,6 +190,7 @@ const Order = {
         o.status,
         o.store_name,
         o.store_address,
+        o.store_phone,
         u.name          AS customer_name,
         oi.id           AS item_id,
         oi.bundles_ordered,
