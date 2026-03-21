@@ -15,4 +15,7 @@ router.get('/godowns', verifyToken, inventoryController.godowns);
 router.get('/racks/:godownId', verifyToken, inventoryController.racks);
 router.get('/shelves/:rackId', verifyToken, inventoryController.shelves);
 
+// Admin only — must be after static paths (e.g. not before /inward)
+router.put('/:id', verifyToken, adminOnly, inventoryController.updateInward);
+
 module.exports = router;

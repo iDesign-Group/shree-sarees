@@ -135,7 +135,8 @@ router.get('/shipments', adminSession, async (req, res) => {
 // Delivery Challan
 router.get('/delivery-challan', adminSession, async (req, res) => {
   try {
-    const challanItems = await Order.getDeliveryChallanItems();
+    const orderId = req.query.orderId ? Number(req.query.orderId) : null;
+    const challanItems = await Order.getDeliveryChallanItems(orderId);
     // Group by order_id
     const ordersMap = {};
     for (const row of challanItems) {
@@ -146,6 +147,7 @@ router.get('/delivery-challan', adminSession, async (req, res) => {
           status: row.status,
           store_name: row.store_name,
           store_address: row.store_address,
+          store_phone: row.store_phone,
           customer_name: row.customer_name,
           items: [],
         };
@@ -158,16 +160,54 @@ router.get('/delivery-challan', adminSession, async (req, res) => {
         image_url: row.image_url,
         bundles_ordered: row.bundles_ordered,
         sarees_count: row.sarees_count,
+        set_size: row.set_size,
+        price_per_saree_at_order: row.price_per_saree_at_order,
+        bundle_cost: row.bundle_cost,
         godown_name: row.godown_name,
         rack_number: row.rack_number,
         shelf_number: row.shelf_number,
       });
     }
-    const orders = Object.values(ordersMap);
-    res.render('delivery-challan', { page: 'delivery-challan', orders });
+    const orders = Object.values(ordersMap).map((order) => {
+      const items = order.items.map((item) => {
+        const rawPath = item.image_url || '';
+        let image_url = null;
+        if (rawPath) {
+          if (/^https?:\/\//i.test(rawPath)) {
+            image_url = rawPath;
+          } else {
+            const normalized = rawPath.replace(/\\/g, '/').replace(/^\/?uploads\//i, '');
+            image_url = `/uploads/${normalized}`;
+          }
+        }
+
+        const bundleCost = Number(item.bundle_cost || 0);
+        const bundlesOrdered = Number(item.bundles_ordered || 0);
+        const pricePerBundle = bundlesOrdered > 0 ? bundleCost / bundlesOrdered : 0;
+        return { ...item, image_url, pricePerBundle };
+      });
+
+      const totalBundles = items.reduce((sum, item) => sum + Number(item.bundles_ordered || 0), 0);
+      const totalSarees = items.reduce((sum, item) => sum + Number(item.sarees_count || 0), 0);
+      const totalAmount = items.reduce((sum, item) => sum + Number(item.bundle_cost || 0), 0);
+
+      return {
+        ...order,
+        items,
+        totalBundles,
+        totalSarees,
+        totalAmount,
+        creditPeriodLabel: order.credit_period_days ? `${order.credit_period_days} days` : 'Not specified',
+      };
+    });
+    res.render('delivery-challan', {
+      page: 'delivery-challan',
+      orders,
+      selectedOrderId: orderId,
+    });
   } catch (err) {
     console.error(err);
-    res.render('delivery-challan', { page: 'delivery-challan', orders: [] });
+    res.render('delivery-challan', { page: 'delivery-challan', orders: [], selectedOrderId: null });
   }
 });
 
