@@ -27,19 +27,7 @@ class OrderProvider extends ChangeNotifier {
 
   Future<void> cancelOrder(int id) async {
     await ApiService.cancelOrder(id);
-    final idx = _orders.indexWhere((o) => o.id == id);
-    if (idx != -1) {
-      _orders[idx] = Order(
-        id: _orders[idx].id,
-        userId: _orders[idx].userId,
-        status: 'cancelled',
-        orderDate: _orders[idx].orderDate,
-        totalSarees: _orders[idx].totalSarees,
-        totalAmount: _orders[idx].totalAmount,
-        userName: _orders[idx].userName,
-        items: _orders[idx].items,
-      );
-      notifyListeners();
-    }
+    // Reload from server so status matches DB (avoids stale UI after login / cold start).
+    await loadOrders();
   }
 }

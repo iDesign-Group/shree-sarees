@@ -46,7 +46,11 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Order?> placeOrder({String? storeName}) async {
+  Future<Order?> placeOrder({
+    String? storeName,
+    String? storeAddress,
+    String? storePhone,
+  }) async {
     if (_items.isEmpty) return null;
     _isPlacingOrder = true;
     notifyListeners();
@@ -57,7 +61,12 @@ class CartProvider extends ChangeNotifier {
                 'bundles_ordered': item.bundles,
               })
           .toList();
-      final order = await ApiService.placeOrder(orderItems, storeName: storeName);
+      final order = await ApiService.placeOrder(
+        orderItems,
+        storeName: storeName,
+        storeAddress: storeAddress,
+        storePhone: storePhone,
+      );
       _items.clear();
       _isPlacingOrder = false;
       notifyListeners();
