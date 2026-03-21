@@ -82,13 +82,20 @@ class ApiService {
   }
 
   // ── Orders ──────────────────────────────────────────
-  static Future<Order> placeOrder(List<Map<String, dynamic>> items, {String? storeName}) async {
+  static Future<Order> placeOrder(
+    List<Map<String, dynamic>> items, {
+    String? storeName,
+    String? storeAddress,
+    String? storePhone,
+  }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/orders'),
       headers: await _headers(),
       body: jsonEncode({
         'items': items,
         if (storeName != null && storeName.isNotEmpty) 'store_name': storeName,
+        if (storeAddress != null && storeAddress.isNotEmpty) 'store_address': storeAddress,
+        if (storePhone != null && storePhone.isNotEmpty) 'store_phone': storePhone,
       }),
     );
     final data = jsonDecode(res.body);
