@@ -28,7 +28,7 @@ class StatusBadge extends StatelessWidget {
       ),
       child: Text(
         status[0].toUpperCase() + status.substring(1),
-        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+        style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: color),
       ),
     );
   }

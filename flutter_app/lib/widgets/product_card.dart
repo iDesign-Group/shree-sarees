@@ -46,7 +46,7 @@ class ProductCard extends StatelessWidget {
                 children: [
                   Text(
                     product.productCode,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.accent,
@@ -56,7 +56,7 @@ class ProductCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     product.productName,
-                    style: GoogleFonts.playfairDisplay(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.sourceSerif4(fontSize: 14, fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -65,12 +65,12 @@ class ProductCard extends StatelessWidget {
                     children: [
                       Text(
                         '₹${product.pricePerSaree.toStringAsFixed(0)}/pc',
-                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary),
                       ),
                       const Spacer(),
                       Text(
                         'Set of ${product.setSize}',
-                        style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecondary),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.textSecondary),
                       ),
                     ],
                   ),
@@ -78,7 +78,7 @@ class ProductCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${product.totalBundles} bundles in stock',
-                      style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecondary),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.textSecondary),
                     ),
                   ],
                 ],
@@ -98,7 +98,7 @@ class ProductCard extends StatelessWidget {
                     children: [
                       const Icon(LucideIcons.shoppingBag, size: 14, color: AppTheme.primary),
                       const SizedBox(width: 6),
-                      Text('Add to Cart', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                      Text('Add to Cart', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primary)),
                     ],
                   ),
                 ),

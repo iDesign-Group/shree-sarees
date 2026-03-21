@@ -30,8 +30,8 @@ class KpiCard extends StatelessWidget {
           children: [
             Icon(icon, color: AppTheme.primary, size: 22),
             const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.playfairDisplay(fontSize: 28, fontWeight: FontWeight.w700)),
-            Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
+            Text(value, style: GoogleFonts.sourceSerif4(fontSize: 28, fontWeight: FontWeight.w700)),
+            Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondary)),
           ],
         ),
       ),
