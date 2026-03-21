@@ -61,6 +61,15 @@
                 &#128203; Challan
               </a>
               <% } %>
+              <% if (order.status !== 'delivered') { %>
+              <button type="button"
+                class="btn btn-sm"
+                style="background:#fff;color:#B00020;border:1px solid #e8b4b4;font-size:12px;"
+                onclick="event.stopPropagation(); cancelOrder(<%= order.id %>)"
+                title="Cancel order (e.g. on broker / shop instruction)">
+                Cancel order
+              </button>
+              <% } %>
             <% } else { %>
               <span style="color:#c0392b;font-size:12px;font-weight:600;">Cancelled</span>
             <% } %>

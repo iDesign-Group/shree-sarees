@@ -30,8 +30,13 @@
           <strong>Credit Period:</strong> <%= order.creditPeriodLabel %>
         </div>
         <% if (order.store_address) { %>
-        <div style="color:#6B6B6B;font-size:12px;margin-top:2px;">
-          <strong>Deliver to:</strong> <%= order.store_address %>
+        <div style="color:#6B6B6B;font-size:12px;margin-top:6px;line-height:1.45;">
+          <strong>Store address:</strong> <%= order.store_address %>
+        </div>
+        <% } %>
+        <% if (order.store_phone) { %>
+        <div style="color:#6B6B6B;font-size:12px;margin-top:4px;">
+          <strong>Contact:</strong> <%= order.store_phone %>
         </div>
         <% } %>
       </div>

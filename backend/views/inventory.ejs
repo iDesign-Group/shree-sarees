@@ -109,23 +109,83 @@
         <th>Sarees</th>
         <th>Location</th>
         <th>Inward Date</th>
+        <th class="no-print">Actions</th>
       </tr>
     </thead>
     <tbody>
       <% inventory.forEach(function(inv) { %>
-        <tr>
+        <% var invDateIso = inv.inward_date ? new Date(inv.inward_date).toISOString().slice(0, 10) : ''; %>
+        <tr
+          data-inv-id="<%= inv.id %>"
+          data-set-size="<%= inv.set_size %>"
+          data-bundle="<%= inv.bundle_count %>"
+          data-godown-id="<%= inv.godown_id %>"
+          data-rack-id="<%= inv.rack_id %>"
+          data-shelf-id="<%= inv.shelf_id %>"
+          data-inward-date="<%= invDateIso %>"
+        >
           <td><strong><%= inv.product_name %></strong> <span style="color:#6B6B6B;">(<%= inv.product_code %>)</span></td>
           <td><%= inv.bundle_count %></td>
           <td><%= inv.total_sarees %></td>
           <td><%= inv.godown_name %> → <%= inv.rack_number %> → <%= inv.shelf_number %></td>
           <td><%= new Date(inv.inward_date).toLocaleDateString('en-IN') %></td>
+          <td class="action-btns no-print">
+            <button type="button" class="btn btn-sm btn-outline-maroon" onclick="event.stopPropagation(); openEditInwardDrawer(this)">
+              <i class="lucide-pencil"></i> Correct
+            </button>
+          </td>
         </tr>
       <% }) %>
       <% if (inventory.length === 0) { %>
-        <tr><td colspan="5" style="text-align:center;color:#6B6B6B;padding:32px;">No inventory records yet.</td></tr>
+        <tr><td colspan="6" style="text-align:center;color:#6B6B6B;padding:32px;">No inventory records yet.</td></tr>
       <% } %>
     </tbody>
   </table>
+</div>
+
+<!-- Correct inward entry (wrong quantity / date / shelf) -->
+<div class="drawer-overlay" id="editInwardOverlay" onclick="closeEditInwardDrawer()"></div>
+<div class="drawer" id="editInwardDrawer" style="max-width:420px;">
+  <div class="drawer-header">
+    <h3>Correct inward stock</h3>
+    <button type="button" class="icon-btn" onclick="closeEditInwardDrawer()"><i class="lucide-x"></i></button>
+  </div>
+  <div class="drawer-body">
+    <input type="hidden" id="editInwardId">
+    <input type="hidden" id="editInwardSetSize">
+    <p id="editInwardProductLabel" style="font-weight:600;margin-bottom:12px;"></p>
+    <div class="form-group">
+      <label>Number of bundles</label>
+      <input type="number" id="editInwardBundles" class="form-control" min="1" oninput="calcEditInwardSarees()">
+    </div>
+    <div class="auto-calc" id="editInwardSareesCalc" style="margin-bottom:12px;">Total sarees: 0</div>
+    <div class="form-group">
+      <label>Inward date</label>
+      <input type="date" id="editInwardDate" class="form-control">
+    </div>
+    <div class="form-group">
+      <label>Godown</label>
+      <select id="editInwardGodown" class="form-control" onchange="editInwardLoadRacks()">
+        <option value="">Select Godown</option>
+        <% godowns.forEach(function(g) { %>
+          <option value="<%= g.id %>"><%= g.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Rack</label>
+      <select id="editInwardRack" class="form-control" onchange="editInwardLoadShelves()" disabled>
+        <option value="">Select Rack</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Shelf</label>
+      <select id="editInwardShelf" class="form-control" disabled>
+        <option value="">Select Shelf</option>
+      </select>
+    </div>
+    <button type="button" class="btn btn-gold" style="width:100%;" onclick="submitEditInward()">Save correction</button>
+  </div>
 </div>
 
 <%- include('layout/footer') %>
