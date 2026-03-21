@@ -62,17 +62,17 @@ class _SplashScreenState extends State<SplashScreen>
                 alignment: Alignment.center,
                 child: Text(
                   'SS',
-                  style: GoogleFonts.playfairDisplay(
+                  style: GoogleFonts.sourceSerif4(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.accent,
+                    color: Colors.white,
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
                 'Shree Sarees',
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.sourceSerif4(
                   fontSize: 32,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.primary,
@@ -81,10 +81,11 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 8),
               Text(
                 'Quality in Every Weave',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: AppTheme.accent,
+                  color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w500,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],

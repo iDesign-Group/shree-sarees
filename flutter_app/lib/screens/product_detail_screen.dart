@@ -127,7 +127,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(p.productCode,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.textPrimary)),
@@ -136,7 +136,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Name
                   Text(p.productName,
-                      style: GoogleFonts.playfairDisplay(
+                      style: GoogleFonts.sourceSerif4(
                           fontSize: 22, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
 
@@ -144,12 +144,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Row(
                     children: [
                       Text('₹${p.pricePerSaree.toStringAsFixed(0)} per saree',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 14, color: AppTheme.textSecondary)),
                       const SizedBox(width: 16),
                       Text(
                           '₹${p.bundlePrice.toStringAsFixed(0)} per bundle',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: AppTheme.primary)),
@@ -167,7 +167,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       border: Border.all(color: AppTheme.accent),
                     ),
                     child: Text('${p.setSize} Sarees per Bundle',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primary)),
@@ -187,7 +187,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Text('$_bundles',
-                            style: GoogleFonts.playfairDisplay(
+                            style: GoogleFonts.sourceSerif4(
                                 fontSize: 20, fontWeight: FontWeight.w700)),
                       ),
                       _StepperButton(
@@ -199,7 +199,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 8),
                   Center(
                     child: Text('Total Sarees: $totalSarees',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primary)),

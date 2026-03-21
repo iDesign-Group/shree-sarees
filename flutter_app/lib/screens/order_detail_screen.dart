@@ -54,7 +54,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Order Summary',
-                                  style: GoogleFonts.playfairDisplay(fontSize: 18, fontWeight: FontWeight.w700)),
+                                  style: GoogleFonts.sourceSerif4(fontSize: 18, fontWeight: FontWeight.w700)),
                               const SizedBox(height: 12),
                               _Row('Status', _order!.status.toUpperCase()),
                               _Row('Total Sarees', '${_order!.totalSarees}'),
@@ -62,19 +62,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               _Row('Date', '${_order!.orderDate.day}/${_order!.orderDate.month}/${_order!.orderDate.year}'),
                               if (_order!.storeName != null && _order!.storeName!.isNotEmpty)
                                 _Row('Store', _order!.storeName!),
+                              if (_order!.storeAddress != null && _order!.storeAddress!.isNotEmpty)
+                                _Row('Store address', _order!.storeAddress!),
+                              if (_order!.storePhone != null && _order!.storePhone!.isNotEmpty)
+                                _Row('Contact', _order!.storePhone!),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text('Items', style: GoogleFonts.playfairDisplay(fontSize: 16, fontWeight: FontWeight.w600)),
+                      Text('Items', style: GoogleFonts.sourceSerif4(fontSize: 16, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       ..._order!.items.map((item) => Card(
                             child: ListTile(
                               title: Text(item.productName),
                               subtitle: Text('${item.bundlesOrdered} bundles \u00d7 ${item.sareesCount} sarees'),
                               trailing: Text('\u20b9${item.bundleCost.toStringAsFixed(0)}',
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: AppTheme.primary)),
                             ),
                           )),
                       if (_shipment != null) ...[
@@ -91,7 +95,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Shipment Info',
-                                  style: GoogleFonts.playfairDisplay(fontSize: 16, fontWeight: FontWeight.w600)),
+                                  style: GoogleFonts.sourceSerif4(fontSize: 16, fontWeight: FontWeight.w600)),
                               const SizedBox(height: 8),
                               _Row('Courier', _shipment!.courierName ?? '-'),
                               _Row('Tracking', _shipment!.trackingNumber ?? '-'),
@@ -121,8 +125,8 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textSecondary)),
-          Text(value, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppTheme.textSecondary)),
+          Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );

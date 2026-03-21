@@ -30,7 +30,7 @@ class ProfileScreen extends StatelessWidget {
               backgroundColor: AppTheme.primary,
               child: Text(
                 user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.sourceSerif4(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.accent),
@@ -38,11 +38,11 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(user.name,
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.sourceSerif4(
                     fontSize: 22, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(user.email,
-                style: GoogleFonts.inter(color: AppTheme.textSecondary)),
+                style: GoogleFonts.plusJakartaSans(color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
             Container(
               padding:
@@ -53,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Text(
                 user.role.replaceAll('_', ' ').toUpperCase(),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.accent),

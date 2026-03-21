@@ -34,7 +34,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Shree Sarees',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.sourceSerif4(
                 fontSize: 20, fontWeight: FontWeight.w600)),
         actions: [
           Badge(
@@ -74,7 +74,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                 : provider.products.isEmpty
                     ? Center(
                         child: Text('No products found.',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                                 color: AppTheme.textSecondary)))
                     : GridView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -159,7 +159,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       child: Text(
                         product.productCode,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.textPrimary,
@@ -182,7 +182,7 @@ class _ProductCard extends StatelessWidget {
                       product.productName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.playfairDisplay(
+                      style: GoogleFonts.sourceSerif4(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -190,7 +190,7 @@ class _ProductCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '₹${product.bundlePrice.toStringAsFixed(0)}/bundle',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.primary,
@@ -207,7 +207,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       child: Text(
                         '${product.setSize} per bundle',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.primary,

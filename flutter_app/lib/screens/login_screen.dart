@@ -57,14 +57,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 alignment: Alignment.center,
                 child: Text('SS',
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.sourceSerif4(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.accent)),
               ),
               const SizedBox(height: 16),
               Text('Shree Sarees',
-                  style: GoogleFonts.playfairDisplay(
+                  style: GoogleFonts.sourceSerif4(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.primary)),
@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(auth.error!,
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13, color: AppTheme.error)),
                         ),
                       TextField(
@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'Access is time-limited. Contact your broker for credentials.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, color: AppTheme.textSecondary),
               ),
             ],
