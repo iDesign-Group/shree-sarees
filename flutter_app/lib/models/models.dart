@@ -100,6 +100,8 @@ class Order {
   final double totalAmount;
   final String? userName;
   final String? storeName;
+  final String? storeAddress;
+  final String? storePhone;
   final List<OrderItem> items;
 
   Order({
@@ -111,18 +113,41 @@ class Order {
     required this.totalAmount,
     this.userName,
     this.storeName,
+    this.storeAddress,
+    this.storePhone,
     this.items = const [],
   });
+
+  /// Normalizes API/DB status so UI rules stay consistent after login / cold start.
+  static String normalizeStatus(dynamic raw) {
+    if (raw == null) return 'pending';
+    final s = raw.toString().trim().toLowerCase();
+    if (s.isEmpty) return 'unknown';
+    if (s == 'canceled') return 'cancelled';
+    return s;
+  }
+
+  /// Broker may cancel only before shipment (matches typical business rules).
+  bool get canBrokerCancel =>
+      status == 'pending' || status == 'confirmed';
+
+  /// Admin: allow cancel unless already terminal (not shipped — optional; keep shipped cancellable if API allows).
+  bool get canAdminCancel =>
+      status != 'cancelled' &&
+      status != 'delivered' &&
+      status != 'unknown';
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
         id: json['id'],
         userId: json['user_id'] ?? 0,
-        status: json['status'] ?? 'pending',
+        status: normalizeStatus(json['status']),
         orderDate: DateTime.tryParse(json['order_date'] ?? '') ?? DateTime.now(),
         totalSarees: json['total_sarees'] ?? 0,
         totalAmount: double.tryParse(json['total_amount'].toString()) ?? 0,
         userName: json['user_name'],
         storeName: json['store_name'],
+        storeAddress: json['store_address']?.toString(),
+        storePhone: json['store_phone']?.toString(),
         items: json['items'] != null
             ? (json['items'] as List).map((e) => OrderItem.fromJson(e)).toList()
             : [],
