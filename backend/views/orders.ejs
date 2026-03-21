@@ -36,18 +36,31 @@
           <td><%= order.user_name %></td>
           <td><%= order.store_name || '-' %></td>
           <td><%= order.total_sarees %></td>
-          <td>₹<%= Number(order.total_amount).toLocaleString('en-IN') %></td>
+          <td>&#8377;<%= Number(order.total_amount).toLocaleString('en-IN') %></td>
           <td><span class="badge badge-<%= order.status %>"><%= order.status %></span></td>
           <td><%= new Date(order.order_date).toLocaleDateString('en-IN') %></td>
           <td class="action-btns" onclick="event.stopPropagation()">
             <% if (order.status !== 'cancelled') { %>
-              <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px;" onchange="updateOrderStatus(<%= order.id %>, this.value)">
-                <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
-                <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+              <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px;"
+                onchange="updateOrderStatus(<%= order.id %>, this.value)">
+                <option value="pending"    <%= order.status === 'pending'    ? 'selected' : '' %>>Pending</option>
+                <option value="confirmed"  <%= order.status === 'confirmed'  ? 'selected' : '' %>>Confirmed</option>
+                <option value="shipped"    <%= order.status === 'shipped'    ? 'selected' : '' %>>Shipped</option>
+                <option value="delivered"  <%= order.status === 'delivered'  ? 'selected' : '' %>>Delivered</option>
               </select>
-              <button class="btn btn-sm btn-outline-maroon" onclick="event.stopPropagation(); openShipmentForOrder(<%= order.id %>)">Shipment</button>
+              <button class="btn btn-sm btn-outline-maroon"
+                onclick="event.stopPropagation(); openShipmentForOrder(<%= order.id %>)">
+                Shipment
+              </button>
+              <% if (order.status === 'pending' || order.status === 'confirmed') { %>
+              <a href="/admin/delivery-challan"
+                class="btn btn-sm"
+                style="background:#f5f0e8;color:#5a3e2b;border:1px solid #c9b49a;font-size:12px;"
+                onclick="event.stopPropagation()"
+                title="View packing challan for this order">
+                &#128203; Challan
+              </a>
+              <% } %>
             <% } else { %>
               <span style="color:#c0392b;font-size:12px;font-weight:600;">Cancelled</span>
             <% } %>
@@ -62,7 +75,7 @@
         </tr>
       <% }) %>
       <% if (orders.length === 0) { %>
-        <tr><td colspan="8" style="text-align:center;color:#6B6B6B;padding:32px;">No orders yet.</td></tr>
+        <tr><td colspan="8" style="text-align:center;color:#6B6B6B;">No orders yet.</td></tr>
       <% } %>
     </tbody>
   </table>
