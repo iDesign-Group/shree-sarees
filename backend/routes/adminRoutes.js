@@ -211,6 +211,102 @@ router.get('/delivery-challan', adminSession, async (req, res) => {
   }
 });
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+// Reports — broker-wise monthly sales
+router.get('/reports/broker-sales', adminSession, async (req, res) => {
+  const now = new Date();
+  let year = parseInt(req.query.year, 10);
+  let month = parseInt(req.query.month, 10);
+  if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+    year = now.getFullYear();
+  }
+  if (!Number.isFinite(month) || month < 1 || month > 12) {
+    month = now.getMonth() + 1;
+  }
+
+  try {
+    const brokers = await Order.getBrokerMonthlySales(year, month);
+    const grandTotalSales = brokers.reduce((sum, r) => sum + Number(r.total_sales || 0), 0);
+    const grandTotalSarees = brokers.reduce((sum, r) => sum + Number(r.total_sarees || 0), 0);
+    const grandOrderCount = brokers.reduce((sum, r) => sum + Number(r.order_count || 0), 0);
+
+    res.render('broker-sales-report', {
+      page: 'broker-sales',
+      pageTitle: 'Broker Sales Report',
+      year,
+      month,
+      monthLabel: MONTH_NAMES[month - 1],
+      brokers,
+      grandTotalSales,
+      grandTotalSarees,
+      grandOrderCount,
+    });
+  } catch (err) {
+    console.error(err);
+    res.render('broker-sales-report', {
+      page: 'broker-sales',
+      pageTitle: 'Broker Sales Report',
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      monthLabel: MONTH_NAMES[now.getMonth()],
+      brokers: [],
+      grandTotalSales: 0,
+      grandTotalSarees: 0,
+      grandOrderCount: 0,
+    });
+  }
+});
+
+// Broker sales — product/material breakdown for one broker in a month
+router.get('/reports/broker-sales/:brokerId', adminSession, async (req, res) => {
+  const now = new Date();
+  let year = parseInt(req.query.year, 10);
+  let month = parseInt(req.query.month, 10);
+  if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+    year = now.getFullYear();
+  }
+  if (!Number.isFinite(month) || month < 1 || month > 12) {
+    month = now.getMonth() + 1;
+  }
+
+  const brokerId = parseInt(req.params.brokerId, 10);
+  if (!Number.isFinite(brokerId)) {
+    return res.status(400).send('Invalid broker id');
+  }
+
+  try {
+    const broker = await User.findById(brokerId);
+    if (!broker || broker.role !== 'broker') {
+      return res.status(404).send('Broker not found');
+    }
+
+    const lines = await Order.getBrokerMonthlyProductBreakdown(brokerId, year, month);
+    const lineTotal = lines.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const lineSarees = lines.reduce((sum, r) => sum + Number(r.sarees_sold || 0), 0);
+    const lineBundles = lines.reduce((sum, r) => sum + Number(r.bundles_sold || 0), 0);
+
+    res.render('broker-sales-detail', {
+      page: 'broker-sales',
+      pageTitle: `Sales detail — ${broker.name}`,
+      broker,
+      year,
+      month,
+      monthLabel: MONTH_NAMES[month - 1],
+      lines,
+      lineTotal,
+      lineSarees,
+      lineBundles,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to load broker sales detail');
+  }
+});
+
 // Users
 router.get('/users', adminSession, async (req, res) => {
   try {
