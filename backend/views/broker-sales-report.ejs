@@ -1,0 +1,71 @@
+<% var pageTitle = 'Broker Sales Report'; %>
+<%- include('layout/header') %>
+
+<div class="card">
+  <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+    <h3>Broker-wise sales (monthly)</h3>
+    <form method="get" action="/admin/reports/broker-sales" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <label style="font-size:13px;color:var(--text-secondary);font-weight:600;">Period</label>
+      <select name="month" class="form-control" style="width:auto;min-width:140px;">
+        <% for (var m = 1; m <= 12; m++) { %>
+          <option value="<%= m %>" <%= month === m ? 'selected' : '' %>><%= ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] %></option>
+        <% } %>
+      </select>
+      <select name="year" class="form-control" style="width:auto;min-width:100px;">
+        <% var cy = new Date().getFullYear(); for (var y = cy; y >= cy - 5; y--) { %>
+          <option value="<%= y %>" <%= year === y ? 'selected' : '' %>><%= y %></option>
+        <% } %>
+      </select>
+      <button type="submit" class="btn btn-maroon btn-sm">Apply</button>
+    </form>
+  </div>
+
+  <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">
+    Showing <strong><%= monthLabel %> <%= year %></strong> — totals include all orders except <strong>cancelled</strong>.
+  </p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Broker</th>
+        <th>Email</th>
+        <th style="text-align:center;">Orders</th>
+        <th style="text-align:right;">Total sarees</th>
+        <th style="text-align:right;">Sale amount (₹)</th>
+        <th class="no-print" style="text-align:center;white-space:nowrap;">Detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% brokers.forEach(function(b, idx) { %>
+        <tr>
+          <td><%= idx + 1 %></td>
+          <td><strong><%= b.broker_name %></strong></td>
+          <td style="font-size:12px;color:var(--text-secondary);"><%= b.broker_email %></td>
+          <td style="text-align:center;"><%= b.order_count %></td>
+          <td style="text-align:right;"><%= Number(b.total_sarees || 0).toLocaleString('en-IN') %></td>
+          <td style="text-align:right;font-weight:600;">&#8377;<%= Number(b.total_sales || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+          <td class="no-print" style="text-align:center;">
+            <a href="/admin/reports/broker-sales/<%= b.broker_id %>?year=<%= year %>&month=<%= month %>" class="btn btn-sm btn-outline-maroon" title="See products sold by this broker">Materials</a>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (brokers.length === 0) { %>
+        <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-secondary);">No broker users found.</td></tr>
+      <% } %>
+    </tbody>
+    <% if (brokers.length > 0) { %>
+    <tfoot>
+      <tr style="background:var(--bg-elevated);font-weight:700;">
+        <td colspan="3" style="text-align:right;">Grand total</td>
+        <td style="text-align:center;"><%= grandOrderCount %></td>
+        <td style="text-align:right;"><%= Number(grandTotalSarees).toLocaleString('en-IN') %></td>
+        <td style="text-align:right;">&#8377;<%= Number(grandTotalSales).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+        <td class="no-print"></td>
+      </tr>
+    </tfoot>
+    <% } %>
+  </table>
+</div>
+
+<%- include('layout/footer') %>
