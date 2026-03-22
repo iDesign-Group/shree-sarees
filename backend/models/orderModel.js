@@ -245,6 +245,97 @@ const Order = {
     `, params);
     return rows;
   },
+
+  /**
+   * Admin: broker-wise sale totals for a calendar month (excludes cancelled orders).
+   * Returns one row per broker (including brokers with ₹0 in that month).
+   */
+  async getBrokerMonthlySales(year, month) {
+    const y = parseInt(year, 10);
+    const m = parseInt(month, 10);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+      throw new Error('Invalid year or month');
+    }
+    const [rows] = await pool.query(
+      `
+      SELECT
+        u.id AS broker_id,
+        u.name AS broker_name,
+        u.email AS broker_email,
+        COALESCE(
+          SUM(
+            CASE
+              WHEN o.id IS NOT NULL AND IFNULL(o.status, '') <> 'cancelled'
+              THEN o.total_amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_sales,
+        COALESCE(
+          SUM(
+            CASE
+              WHEN o.id IS NOT NULL AND IFNULL(o.status, '') <> 'cancelled'
+              THEN o.total_sarees
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_sarees,
+        COUNT(
+          CASE
+            WHEN o.id IS NOT NULL AND IFNULL(o.status, '') <> 'cancelled'
+            THEN 1
+          END
+        ) AS order_count
+      FROM users u
+      LEFT JOIN orders o
+        ON o.user_id = u.id
+        AND YEAR(o.order_date) = ?
+        AND MONTH(o.order_date) = ?
+      WHERE u.role = 'broker'
+      GROUP BY u.id, u.name, u.email
+      ORDER BY total_sales DESC, broker_name ASC
+    `,
+      [y, m]
+    );
+    return rows;
+  },
+
+  /**
+   * Admin: per-product totals for one broker in a calendar month (excludes cancelled orders).
+   */
+  async getBrokerMonthlyProductBreakdown(brokerId, year, month) {
+    const bid = parseInt(brokerId, 10);
+    const y = parseInt(year, 10);
+    const m = parseInt(month, 10);
+    if (!Number.isFinite(bid) || !Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+      throw new Error('Invalid broker, year or month');
+    }
+    const [rows] = await pool.query(
+      `
+      SELECT
+        p.id AS product_id,
+        p.product_code,
+        p.product_name,
+        p.set_size,
+        SUM(oi.bundles_ordered) AS bundles_sold,
+        SUM(oi.sarees_count) AS sarees_sold,
+        SUM(oi.bundle_cost) AS amount
+      FROM order_items oi
+      INNER JOIN orders o ON oi.order_id = o.id
+      INNER JOIN products p ON oi.product_id = p.id
+      WHERE o.user_id = ?
+        AND YEAR(o.order_date) = ?
+        AND MONTH(o.order_date) = ?
+        AND IFNULL(o.status, '') <> 'cancelled'
+      GROUP BY p.id, p.product_code, p.product_name, p.set_size
+      ORDER BY amount DESC, p.product_name ASC
+    `,
+      [bid, y, m]
+    );
+    return rows;
+  },
 };
 
 module.exports = Order;
