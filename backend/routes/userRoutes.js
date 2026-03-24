@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { verifyToken, adminOnly } = require('../middleware/authMiddleware');
+const { checkLoginExpiry } = require('../middleware/loginExpiryMiddleware');
 
 // Auth
 router.post('/login', userController.login);
 
 // Current user
-router.get('/me', verifyToken, userController.me);
+router.get('/me', verifyToken, checkLoginExpiry, userController.me);
 
 // Admin only
 router.get('/', verifyToken, adminOnly, userController.list);
