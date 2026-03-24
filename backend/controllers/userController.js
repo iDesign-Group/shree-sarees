@@ -21,9 +21,12 @@ const userController = {
         return res.status(401).json({ error: 'Invalid credentials.' });
       }
 
-      // Set login_expiry for shop_owner
-      if (user.role === 'shop_owner') {
-        const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      // Set role-based login expiry (configurable via env).
+      if (user.role === 'shop_owner' || user.role === 'broker') {
+        const shopOwnerMinutes = parseInt(process.env.SHOP_OWNER_SESSION_MINUTES || '15', 10);
+        const brokerMinutes = parseInt(process.env.BROKER_SESSION_MINUTES || '720', 10); // 12 hours default
+        const minutes = user.role === 'shop_owner' ? shopOwnerMinutes : brokerMinutes;
+        const expiry = new Date(Date.now() + Math.max(minutes, 1) * 60 * 1000);
         await User.setLoginExpiry(user.id, expiry);
       }
 
