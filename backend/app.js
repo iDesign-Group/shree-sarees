@@ -21,6 +21,11 @@ app.use(session({
 app.set('view engine', 'ejs');
 app.set('views', './views');
 
+// Root -> Admin panel
+app.get('/', (req, res) => {
+  res.redirect('/admin');
+});
+
 // Web admin panel routes
 app.use('/admin', require('./routes/adminRoutes'));
 
