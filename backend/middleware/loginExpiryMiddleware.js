@@ -1,8 +1,8 @@
 const pool = require('../models/db');
 
-// Check login_expiry for shop_owner role
+// Check login_expiry for time-limited roles (shop_owner, broker)
 const checkLoginExpiry = async (req, res, next) => {
-  if (!req.user || req.user.role !== 'shop_owner') {
+  if (!req.user || !['shop_owner', 'broker'].includes(req.user.role)) {
     return next();
   }
 
@@ -19,7 +19,9 @@ const checkLoginExpiry = async (req, res, next) => {
     const { login_expiry } = rows[0];
     if (!login_expiry || new Date(login_expiry) < new Date()) {
       return res.status(401).json({
-        error: 'Session expired. Please contact your broker.',
+        error: req.user.role === 'shop_owner'
+          ? 'Session expired. Please contact your broker.'
+          : 'Session expired. Please login again.',
         code: 'SESSION_EXPIRED',
       });
     }
