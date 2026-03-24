@@ -52,8 +52,40 @@ class ApiService {
     final userStr = prefs.getString('user');
     if (userStr == null) return null;
     final token = prefs.getString('token');
-    if (token != null) _memoryToken = token;
-    return AppUser.fromJson(jsonDecode(userStr));
+    if (token == null) {
+      await logout();
+      return null;
+    }
+
+    _memoryToken = token;
+
+    // Validate server-side session on app open (important for role-based login expiry).
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/api/users/me'),
+        headers: await _headers(),
+      );
+      if (res.statusCode == 200) {
+        final serverUser = AppUser.fromJson(jsonDecode(res.body));
+        await prefs.setString('user', jsonEncode({
+          'id': serverUser.id,
+          'name': serverUser.name,
+          'email': serverUser.email,
+          'role': serverUser.role,
+          'phone': serverUser.phone,
+        }));
+        return serverUser;
+      }
+      if (res.statusCode == 401 || res.statusCode == 403) {
+        await logout();
+        return null;
+      }
+      // Temporary server/network issues: keep cached user.
+      return AppUser.fromJson(jsonDecode(userStr));
+    } catch (_) {
+      // Offline/connection failure: keep cached user.
+      return AppUser.fromJson(jsonDecode(userStr));
+    }
   }
 
   static Future<bool> isLoggedIn() async {
